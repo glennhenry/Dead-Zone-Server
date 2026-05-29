@@ -1,0 +1,8 @@
+package game.routes.message.db
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class LoadObjectsArgs(
+    val objectIds: List<BigDBObjectId> = listOf()
+)
