@@ -19,7 +19,7 @@ import encore.EncoreIdentity
  * - [Description]: descriptive texts.
  */
 object GameIdentity {
-    const val Title = "Unnamed"
-    const val Version = "0.0.1"
-    const val Description = ""
+    const val Title = "DeadZoneServer"
+    const val Version = "1.0.0"
+    const val Description = "DZ Revival (trial refactor edition)"
 }

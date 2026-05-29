@@ -18,8 +18,8 @@ import kotlinx.serialization.Serializable
 data class Profile(
     val playerId: PlayerId,
     val email: String = "",
-    val displayName: String,
-    val avatarUrl: String,
+    val displayName: String = "",
+    val avatarUrl: String = "",
     val createdAt: Long = getTimeMillis(),
     val lastLogin: Long = getTimeMillis(),
     val countryCode: String? = null,

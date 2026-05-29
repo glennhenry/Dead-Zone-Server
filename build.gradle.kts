@@ -16,12 +16,12 @@ application {
 
 ktor {
     fatJar {
-        archiveFileName.set("encore.jar")
+        archiveFileName.set("Dead-Zone-Server.jar")
     }
 }
 
 tasks.withType<ShadowJar> {
-    archiveFileName.set("encore.jar")
+    archiveFileName.set("Dead-Zone-Server.jar")
     destinationDirectory.set(file("deploy"))
     manifest {
         attributes["Main-Class"] = "ApplicationKt"

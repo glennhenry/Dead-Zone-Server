@@ -1,4 +1,4 @@
-rootProject.name = "Encore"
+rootProject.name = "Dead-Zone-Server"
 
 dependencyResolutionManagement {
     repositories {

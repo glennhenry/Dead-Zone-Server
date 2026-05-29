@@ -3,7 +3,7 @@ import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import encore.datastore.MongoCollectionName
 import org.bson.Document
 
-const val CHANGE_ME_TEST_DB_NAME = "CHANGE_ME-test-DB"
+const val CHANGE_ME_TEST_DB_NAME = "DZ-refactor-test-DB"
 const val MONGO_TEST_URL = "mongodb://localhost:27017"
 val TestMongoCollectionName = MongoCollectionName(
     playerAccount = "test_player_account",
