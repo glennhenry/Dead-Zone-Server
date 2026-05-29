@@ -34,7 +34,7 @@ fun resolveAndLoadScene(areaType: String): String? {
 }
 
 fun loadSceneXML(filename: String): String {
-    val path = "static/game/data/xml/scenes/$filename.xml.gz"
+    val path = "assets/game/data/xml/scenes/$filename.xml.gz"
     val file = File(path)
 
     GZIPInputStream(file.inputStream()).use { gzipStream ->

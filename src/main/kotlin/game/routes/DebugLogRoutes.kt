@@ -20,7 +20,7 @@ class DebugLogRoutes(private val wsManager: WebSocketManager) : RouteHandler {
     override fun Route.install() {
         get("/debuglog") {
             handle(call, NoAuthGuard) {
-                val file = File("static/debuglog.html")
+                val file = File("assets/debuglog.html")
                 if (file.exists()) {
                     call.respondFile(file)
                 } else {

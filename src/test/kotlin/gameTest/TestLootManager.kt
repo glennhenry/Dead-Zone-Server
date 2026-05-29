@@ -28,7 +28,7 @@ class TestLootManager {
     private val SCENES_TO_TEST = listOf("exterior-bridge-1")
     private val GENERATION_PER_SCENE = 10
 
-    val logDir = File("logs")
+    val logDir = File(".logs")
     val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
     val logFile = File(logDir, "loot_generation_test-$timestamp.log")
 
