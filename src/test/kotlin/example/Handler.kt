@@ -53,7 +53,7 @@ class ExampleHandlerTest {
             playerName = playerName,
             message = DotSeparatedFanchant(payload = "MSG1.EX.hello.world.kotlin.ktor"),
             account = createAccount(playerId, playerName, "anypassword"),
-            subunits = PlayerSubunits(),
+            subunits = PlayerSubunits.createForTest(),
             connectionScope = CoroutineScope(StandardTestDispatcher())
         )
 
@@ -76,7 +76,7 @@ class ExampleHandlerTest {
             playerName = playerName,
             message = DotSeparatedFanchant(payload = "MSG1.EX.hello.world.kotlin|ktor"),
             account = createAccount(playerId, playerName, "anypassword"),
-            subunits = PlayerSubunits(),
+            subunits = PlayerSubunits.createForTest(),
             connectionScope = CoroutineScope(StandardTestDispatcher())
         )
 

@@ -10,17 +10,18 @@ fun createAccount(playerId: PlayerId, username: String, password: String): Playe
     return PlayerAccount(
         playerId = playerId,
         username = username,
-        email = "$username@email.com",
         hashedPassword = hash(password),
-        profile = createProfile(playerId)
+        profile = createProfile(playerId, username)
     )
 }
 
-fun createProfile(playerId: PlayerId): Profile {
+fun createProfile(playerId: PlayerId, username: String): Profile {
     val now = TimeCenter.system.now()
     return Profile(
         playerId = playerId,
         createdAt = now,
-        lastActiveAt = now
+        lastLogin = now,
+        displayName = username,
+        avatarUrl = "xiaotinggg"
     )
 }

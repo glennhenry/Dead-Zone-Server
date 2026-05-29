@@ -8,6 +8,8 @@ const val MONGO_TEST_URL = "mongodb://localhost:27017"
 val TestMongoCollectionName = MongoCollectionName(
     playerAccount = "test_player_account",
     playerObjects = "test_player_objects",
+    neighborHistory = "test_neighbor_history",
+    inventory = "test_inventory",
     playerServerObjects = "test_player_server_objects",
     serverObjects = "test_server_objects"
 )

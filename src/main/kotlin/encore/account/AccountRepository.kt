@@ -1,9 +1,9 @@
 package encore.account
 
-import encore.datastore.collection.PlayerAccount
-import encore.datastore.collection.PlayerId
 import encore.account.model.Credentials
 import encore.account.model.Profile
+import encore.datastore.collection.PlayerAccount
+import encore.datastore.collection.PlayerId
 
 /**
  * Repository for [PlayerAccount] core collection.
@@ -43,6 +43,17 @@ interface AccountRepository {
     suspend fun getAccountByUsername(username: String): Result<PlayerAccount?>
 
     /**
+     * Returns [Profile] associated with the given [playerId], if it exists.
+     *
+     * Returns [Result.success] with:
+     * - the [Profile] if found
+     * - `null` if no profile exists for the given [playerId]
+     *
+     * Returns [Result.failure] if an error occurs while retrieving the data.
+     */
+    suspend fun getProfileByPlayerId(playerId: PlayerId): Result<Profile?>
+
+    /**
      * Returns [PlayerId] associated with the given [username], if it exists.
      *
      * Returns [Result.success] with:
@@ -71,10 +82,10 @@ interface AccountRepository {
     suspend fun updateProfile(playerId: PlayerId, profile: Profile): Result<Unit>
 
     /**
-     * Update [Profile.lastActiveAt] of [playerId] with [lastActivity].
+     * Update [Profile.lastLogin] of [playerId] with [lastLogin].
      * @return [Result] type denoting success or failure.
      */
-    suspend fun updateLastActivity(playerId: PlayerId, lastActivity: Long): Result<Unit>
+    suspend fun updateLastLogin(playerId: PlayerId, lastLogin: Long): Result<Unit>
 
     /**
      * Returns whether the provided [username] already exists.

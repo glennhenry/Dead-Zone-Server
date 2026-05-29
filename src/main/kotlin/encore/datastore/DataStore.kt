@@ -5,6 +5,8 @@ import encore.datastore.collection.PlayerId
 import encore.datastore.collection.PlayerObjects
 import encore.datastore.collection.PlayerServerObjects
 import encore.datastore.collection.ServerObjects
+import encore.datastore.collection.Inventory
+import encore.datastore.collection.NeighborHistory
 
 /**
  * A suspendable persistence component that provides access to player and server data.
@@ -45,6 +47,16 @@ interface DataStore {
     suspend fun getPlayerObjects(playerId: PlayerId): PlayerObjects?
 
     /**
+     * Returns the [NeighborHistory] for the given [playerId].
+     */
+    suspend fun getNeighbourHistory(playerId: PlayerId): NeighborHistory?
+
+    /**
+     * Returns the [Inventory] for the given [playerId].
+     */
+    suspend fun getInventory(playerId: PlayerId): Inventory?
+
+    /**
      * Returns the [PlayerServerObjects] (server-managed player data)
      * for the given [playerId].
      */
@@ -63,6 +75,8 @@ interface DataStore {
     suspend fun create(
         account: PlayerAccount,
         playerObjects: PlayerObjects,
+        neighborHistory: NeighborHistory,
+        inventory: Inventory,
         playerServerObjects: PlayerServerObjects
     ): Result<Unit>
 
@@ -70,6 +84,15 @@ interface DataStore {
      * Deletes a player associated with the [playerId].
      */
     suspend fun delete(playerId: PlayerId): Result<Unit>
+
+    /**
+     * A flexible method to update particular field of [PlayerObjects]
+     */
+    suspend fun <T> updatePlayerObjectsField(
+        playerId: String,
+        path: String,
+        value: T
+    )
 
     /**
      * Shutdown the data store.

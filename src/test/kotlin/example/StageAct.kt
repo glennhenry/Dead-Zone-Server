@@ -5,6 +5,7 @@ import encore.acts.choreo.BasicChoreography
 import encore.acts.choreo.Choreography
 import encore.acts.choreo.PerformMode
 import encore.acts.template.runTimer
+import encore.datastore.collection.PlayerId
 import encore.fancam.Fancam
 import encore.time.Timekeeper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -188,7 +189,7 @@ class BuildingConstructionAct(
 }
 
 data class BuildingConstructionConcept(
-    val playerId: String,
+    val playerId: PlayerId,
     val buildingId: String,
     val buildDuration: Duration,
     // this is like the player's connection to send game message

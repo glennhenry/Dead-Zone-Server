@@ -56,9 +56,8 @@ class TestAuthSubunit {
         val account = PlayerAccount(
             playerId = "pid12345",
             username = "name",
-            email = "anyemail",
             hashedPassword = "anypassword",
-            profile = createProfile("pid12345")
+            profile = createProfile("pid12345", "name")
         )
         collection.insertOne(account)
 
@@ -156,10 +155,12 @@ class TestAuthSubunit {
             override suspend fun getPlayerIdByUsername(username: String): Result<PlayerId?> = TODO()
             override suspend fun getCredentials(username: String): Result<Credentials?> =
                 Result.failure(RuntimeException("xiaoting"))
-
+            override suspend fun getProfileByPlayerId(playerId: PlayerId): Result<Profile?> {
+                TODO()
+            }
             override suspend fun updatePlayerAccount(playerId: PlayerId, account: PlayerAccount): Result<Unit> = TODO()
             override suspend fun updateProfile(playerId: PlayerId, profile: Profile): Result<Unit> = TODO()
-            override suspend fun updateLastActivity(playerId: PlayerId, lastActivity: Long): Result<Unit> = TODO()
+            override suspend fun updateLastLogin(playerId: PlayerId, lastLogin: Long): Result<Unit> = TODO()
             override suspend fun usernameExists(username: String): Result<Boolean> = TODO()
             override suspend fun emailExists(email: String): Result<Boolean> = TODO()
         }

@@ -32,9 +32,8 @@ class MongoAccountRepositoryTest {
         val account = PlayerAccount(
             id,
             name,
-            email,
             hash("pw123"),
-            createProfile("id123"),
+            createProfile("id123", name),
         )
 
         collection.insertMany(List(20) { account() } + account)
@@ -56,8 +55,8 @@ class MongoAccountRepositoryTest {
         assertEquals(newId, a.playerId)
         assertEquals(newId, a.profile.playerId)
 
-        repo.updateLastActivity(newId, 1000)
-        assertEquals(1000, repo.getAccountByUsername(name).getOrThrow().profile.lastActiveAt)
+        repo.updateLastLogin(newId, 1000)
+        assertEquals(1000, repo.getAccountByUsername(name).getOrThrow().profile.lastLogin)
 
         assertTrue(repo.usernameExists(name).getOrThrow())
         assertTrue(repo.emailExists(email).getOrThrow())

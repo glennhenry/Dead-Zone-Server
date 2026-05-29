@@ -1,6 +1,7 @@
 package encore.account
 
 import encore.account.model.Credentials
+import encore.account.model.Profile
 import encore.auth.AuthSubunit
 import encore.datastore.collection.PlayerAccount
 import encore.datastore.collection.PlayerId
@@ -24,6 +25,16 @@ import encore.utils.types.toReport
  * @property accountRepository [AccountRepository] implementation.
  */
 class AccountSubunit(private val accountRepository: AccountRepository) : Subunit<ServerScope> {
+    suspend fun getProfile(playerId: PlayerId): Outcome<Profile?> {
+        return accountRepository.getProfileByPlayerId(playerId)
+            .onFailure {
+                Fancam.error(it, Tags.Account) {
+                    "Profile query failed: repository scandal for '$playerId'"
+                }
+            }
+            .toOutcome { profile -> return Outcome.Ok(profile) }
+    }
+
     /**
      * Returns an [Outcome] describing whether [username] exists or not.
      * - [Outcome.Fail] when there is internal repository error.
@@ -76,11 +87,11 @@ class AccountSubunit(private val accountRepository: AccountRepository) : Subunit
      * Update the last activity of [playerId].
      * @return [Report] type denoting success or failure.
      */
-    suspend fun updateLastActivity(playerId: PlayerId, lastActivity: Long): Report {
-        return accountRepository.updateLastActivity(playerId, lastActivity)
+    suspend fun updateLastLogin(playerId: PlayerId, lastLogin: Long): Report {
+        return accountRepository.updateLastLogin(playerId, lastLogin)
             .onFailure {
                 Fancam.error(it, Tags.Account) {
-                    "updateLastActivity failed: repository scandal for '$playerId', lastActivity=$lastActivity"
+                    "updateLastLogin failed: repository scandal for '$playerId', lastLogin=$lastLogin"
                 }
             }
             .toReport()

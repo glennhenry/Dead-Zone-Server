@@ -1,5 +1,7 @@
 package encore.datastore
 
+import encore.datastore.collection.Inventory
+import encore.datastore.collection.NeighborHistory
 import encore.datastore.collection.PlayerAccount
 import encore.datastore.collection.PlayerId
 import encore.datastore.collection.PlayerObjects
@@ -14,9 +16,18 @@ class BlankDataStore : DataStore {
     override suspend fun playerExists(playerId: PlayerId): Boolean = TODO("NO OPERATION")
     override suspend fun getPlayerAccount(playerId: PlayerId): PlayerAccount = TODO("NO OPERATION")
     override suspend fun getPlayerObjects(playerId: PlayerId): PlayerObjects = TODO("NO OPERATION")
+    override suspend fun getNeighbourHistory(playerId: PlayerId): NeighborHistory = TODO("NO OPERATION")
+    override suspend fun getInventory(playerId: PlayerId): Inventory = TODO("NO OPERATION")
     override suspend fun getPlayerServerObjects(playerId: PlayerId): PlayerServerObjects = TODO("NO OPERATION")
     override suspend fun getServerObjects(): ServerObjects = TODO("NO OPERATION")
-    override suspend fun create(account: PlayerAccount, playerObjects: PlayerObjects, playerServerObjects: PlayerServerObjects): Result<Unit> = TODO("NO OPERATION")
+    override suspend fun create(
+        account: PlayerAccount,
+        playerObjects: PlayerObjects,
+        neighborHistory: NeighborHistory,
+        inventory: Inventory,
+        playerServerObjects: PlayerServerObjects
+    ): Result<Unit> = TODO("NO OPERATION")
     override suspend fun delete(playerId: PlayerId): Result<Unit> = TODO("NO OPERATION")
+    override suspend fun <T> updatePlayerObjectsField(playerId: String, path: String, value: T) = TODO("NO OPERATION")
     override suspend fun shutdown() = TODO("NO OPERATION")
 }

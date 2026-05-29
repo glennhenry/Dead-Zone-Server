@@ -10,7 +10,7 @@ import encore.network.transport.ConnectionIdentity
  * on a [Connection] object.
  */
 class DefaultHandlerContext<T : Fanchant>(
-    private val connection: Connection,
+    override val connection: Connection,
     override val fanchant: T
 ) : HandlerContext<T> {
     override val connectionIdentity: ConnectionIdentity = connection.identity
