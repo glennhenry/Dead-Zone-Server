@@ -32,6 +32,17 @@ class MongoAccountRepository(val accountCollection: MongoCollection<PlayerAccoun
         }
     }
 
+    override suspend fun getProfileByPlayerId(playerId: PlayerId): Result<Profile?> {
+        return runMongoCatching {
+            accountCollection
+                .withDocumentClass<QueryProfile>()
+                .find(Filters.eq(FieldPlayerId, playerId))
+                .projection(Projections.include(FieldProfile))
+                .firstOrNull()
+                ?.profile
+        }
+    }
+
     override suspend fun getPlayerIdByUsername(username: String): Result<PlayerId> {
         return runMongoCatching {
             accountCollection
@@ -91,16 +102,16 @@ class MongoAccountRepository(val accountCollection: MongoCollection<PlayerAccoun
         }
     }
 
-    override suspend fun updateLastActivity(
+    override suspend fun updateLastLogin(
         playerId: PlayerId,
-        lastActivity: Long
+        lastLogin: Long
     ): Result<Unit> {
         return runMongoCatching {
             val filter = Filters.eq(FieldPlayerId, playerId)
-            val update = Updates.set(FieldProfileLastActive, lastActivity)
+            val update = Updates.set(FieldProfileLastLogin, lastLogin)
             accountCollection
                 .updateOne(filter, update)
-                .throwIfNotModified("updateLastActivity not updated for $playerId", { filter }, { update })
+                .throwIfNotModified("updateLastLogin not updated for $playerId", { filter }, { update })
         }
     }
 
@@ -138,4 +149,12 @@ data class QueryCredentials(
     @field:BsonId val id: String? = null,
     val playerId: PlayerId,
     val hashedPassword: String
+)
+
+/**
+ * Mongo projection class to query the `profile` of [PlayerAccount].
+ */
+data class QueryProfile(
+    @field:BsonId val id: String? = null,
+    val profile: Profile
 )

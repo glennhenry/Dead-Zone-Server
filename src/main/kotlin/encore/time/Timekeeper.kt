@@ -36,6 +36,13 @@ class Timekeeper(private val source: TimeSource) {
     }
 
     /**
+     * Returns the current time in epoch milliseconds (Double type) for this timekeeper.
+     */
+    fun nowInDouble(): Double {
+        return source.nowMillis().toDouble()
+    }
+
+    /**
      * Returns `true` if more than [minutes] of minutes have elapsed
      * since [timestampMillis].
      */

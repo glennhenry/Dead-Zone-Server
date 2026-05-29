@@ -58,7 +58,7 @@ class PlayerPresenceSubunit : Subunit<ServerScope> {
     /**
      * Update the last network activity of [playerId]. Does nothing if the player is not online.
      */
-    fun updateLastActivity(playerId: PlayerId) {
+    fun updateLastLogin(playerId: PlayerId) {
         onlinePlayers[playerId]?.lastNetworkActivity = TimeCenter.system.now()
     }
 

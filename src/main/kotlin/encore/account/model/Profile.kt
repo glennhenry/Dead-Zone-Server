@@ -1,6 +1,7 @@
 package encore.account.model
 
 import encore.datastore.collection.PlayerId
+import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
 
 /**
@@ -12,11 +13,16 @@ import kotlinx.serialization.Serializable
  *
  * @property playerId Unique identifier of the player.
  * @property createdAt Epoch millis of the account creation date.
- * @property lastActiveAt Epoch millis of the account last activity.
  */
 @Serializable
 data class Profile(
     val playerId: PlayerId,
-    val createdAt: Long,
-    val lastActiveAt: Long,
+    val email: String = "",
+    val displayName: String,
+    val avatarUrl: String,
+    val createdAt: Long = getTimeMillis(),
+    val lastLogin: Long = getTimeMillis(),
+    val countryCode: String? = null,
+    val friends: Set<Profile> = emptySet(),
+    val enemies: Set<Profile> = emptySet(),
 )

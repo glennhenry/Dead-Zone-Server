@@ -10,7 +10,6 @@ import encore.account.model.Profile
  *
  * @property playerId Unique identifier of the player.
  * @property username Display name of the player.
- * @property email Email address associated with this account.
  * @property hashedPassword Hashed version of the account's password.
  * @property profile Representation of the player's profile.
  */
@@ -18,7 +17,6 @@ import encore.account.model.Profile
 data class PlayerAccount(
     val playerId: PlayerId,
     val username: String,
-    val email: String,
     val hashedPassword: String,
     val profile: Profile,
 )

@@ -2,6 +2,7 @@ package encore.network.handler
 
 import encore.datastore.collection.PlayerId
 import encore.network.fanchant.Fanchant
+import encore.network.transport.Connection
 import encore.network.transport.ConnectionIdentity
 
 /**
@@ -19,6 +20,11 @@ interface HandlerContext<out T : Fanchant> {
      * The received network message to be handled.
      */
     val fanchant: T
+
+    /**
+     * Connection object of player
+     */
+    val connection: Connection
 
     /**
      * Send the client [raw] bytes.

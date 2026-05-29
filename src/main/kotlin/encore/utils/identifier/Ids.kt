@@ -35,7 +35,7 @@ object Ids {
      * Returns a v4 UUID as a string based on Java's [java.util.UUID.randomUUID].
      */
     fun uuid(): String {
-        return UUID.randomUUID().toString()
+        return UUID.randomUUID().toString().uppercase()
     }
 
     /**

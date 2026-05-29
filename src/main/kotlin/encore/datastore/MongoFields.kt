@@ -17,7 +17,7 @@ val FieldPlayerId = PlayerAccount::playerId.name
 val FieldUsername = PlayerAccount::username.name
 
 /** `email`*/
-val FieldEmail = PlayerAccount::email.name
+val FieldEmail = Profile::email.name
 
 /** `hashedPassword`*/
 val FieldPassword = PlayerAccount::hashedPassword.name
@@ -25,8 +25,8 @@ val FieldPassword = PlayerAccount::hashedPassword.name
 /** `profile`*/
 val FieldProfile = PlayerAccount::profile.name
 
-/** `profile.lastActiveAt`*/
-val FieldProfileLastActive = "$FieldProfile.${Profile::lastActiveAt.name}"
+/** `profile.lastLogin`*/
+val FieldProfileLastLogin = "$FieldProfile.${Profile::lastLogin.name}"
 
 /** `dbId`*/
 val ServerObjectsDbId = ServerObjects::dbId.name

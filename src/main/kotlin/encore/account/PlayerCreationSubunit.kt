@@ -45,14 +45,15 @@ class PlayerCreationSubunit(private val dataStore: DataStore) : Subunit<ServerSc
         val account = PlayerAccount(
             playerId = playerId,
             username = username,
-            email = email,
             hashedPassword = hash(password),
-            profile = defaultProfile(playerId),
+            profile = defaultProfile(playerId, username, email),
         )
-        val pObj = PlayerObjects.newGame(playerId)
+        val pObj = PlayerObjects.newgame(playerId, username, Ids.uuid())
+        val neighbor = NeighborHistory.empty(playerId)
+        val inv = Inventory.newgame(playerId)
         val psObj = PlayerServerObjects.newGame(playerId)
 
-        val result = dataStore.create(account, pObj, psObj)
+        val result = dataStore.create(account, pObj, neighbor, inv, psObj)
         if (result.isSuccess) {
             return playerId
         }
@@ -81,14 +82,15 @@ class PlayerCreationSubunit(private val dataStore: DataStore) : Subunit<ServerSc
         val account = PlayerAccount(
             playerId = Globals.ADMIN_PLAYER_ID,
             username = Globals.ADMIN_USERNAME,
-            email = Globals.ADMIN_EMAIL,
             hashedPassword = Globals.ADMIN_HASHED_PASSWORD,
-            profile = defaultProfile(Globals.ADMIN_PLAYER_ID),
+            profile = defaultProfile(Globals.ADMIN_PLAYER_ID, Globals.ADMIN_USERNAME, Globals.ADMIN_EMAIL),
         )
         val pObj = PlayerObjects.admin()
+        val neighbor = NeighborHistory.empty(Globals.ADMIN_PLAYER_ID)
+        val inventory = Inventory.admin()
         val psObj = PlayerServerObjects.admin()
 
-        val result = dataStore.create(account, pObj, psObj)
+        val result = dataStore.create(account, pObj, neighbor, inventory, psObj)
 
         if (result.isSuccess) {
             Fancam.info(Tags.Creation) { "New admin account created with username=${Globals.ADMIN_USERNAME}, playerId=${Globals.ADMIN_PLAYER_ID}" }
@@ -100,12 +102,15 @@ class PlayerCreationSubunit(private val dataStore: DataStore) : Subunit<ServerSc
         }
     }
 
-    private fun defaultProfile(playerId: PlayerId): Profile {
+    private fun defaultProfile(playerId: PlayerId, username: String, email: String): Profile {
         val now = TimeCenter.system.now()
         return Profile(
             playerId = playerId,
+            displayName = username,
+            email = email,
             createdAt = now,
-            lastActiveAt = now
+            lastLogin = now,
+            avatarUrl = ""
         )
     }
 

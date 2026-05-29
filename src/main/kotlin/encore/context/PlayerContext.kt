@@ -5,6 +5,14 @@ import encore.datastore.collection.PlayerId
 import encore.network.transport.Connection
 import encore.subunit.Subunit
 import encore.subunit.scope.PlayerScope
+import game.domain.compound.BlankCompoundRepository
+import game.domain.compound.CompoundSubunit
+import game.domain.items.BlankInventoryRepository
+import game.domain.items.InventorySubunit
+import game.domain.metadata.BlankPlayerObjectsMetadataRepository
+import game.domain.metadata.PlayerObjectsMetadataSubunit
+import game.domain.survivor.BlankSurvivorRepository
+import game.domain.survivor.SurvivorSubunit
 
 /**
  * Represents the **server-side context** of a connected player.
@@ -39,12 +47,33 @@ data class PlayerContext(
  *   An `InventorySubunit` may expose operations to query or update inventory.
  */
 data class PlayerSubunits(
-    val example: String = "REPLACE"
+    val survivor: SurvivorSubunit,
+    val compound: CompoundSubunit,
+    val inventory: InventorySubunit,
+    val playerObjectMetadata: PlayerObjectsMetadataSubunit
 ) {
     /**
      * Return all player subunit instances.
      */
     fun all(): Set<Subunit<PlayerScope>> {
-        return setOf()
+        return setOf(survivor, compound, inventory, playerObjectMetadata)
+    }
+
+    companion object {
+        fun createForTest(
+            survivor: SurvivorSubunit = SurvivorSubunit("", BlankSurvivorRepository()),
+            compound: CompoundSubunit = CompoundSubunit(BlankCompoundRepository()),
+            inventory: InventorySubunit = InventorySubunit(BlankInventoryRepository()),
+            playerObjectMetadata: PlayerObjectsMetadataSubunit = PlayerObjectsMetadataSubunit(
+                BlankPlayerObjectsMetadataRepository()
+            ),
+        ): PlayerSubunits {
+            return PlayerSubunits(
+                survivor = survivor,
+                compound = compound,
+                inventory = inventory,
+                playerObjectMetadata = playerObjectMetadata
+            )
+        }
     }
 }

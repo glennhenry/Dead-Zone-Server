@@ -2,7 +2,10 @@ package encore.datastore
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
+import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import encore.datastore.collection.Inventory
+import encore.datastore.collection.NeighborHistory
 import encore.datastore.collection.PlayerAccount
 import encore.datastore.collection.PlayerId
 import encore.datastore.collection.PlayerObjects
@@ -22,6 +25,8 @@ import kotlin.time.measureTime
 data class MongoCollectionName(
     val playerAccount: String,
     val playerObjects: String,
+    val neighborHistory: String,
+    val inventory: String,
     val playerServerObjects: String,
     val serverObjects: String
 )
@@ -36,7 +41,11 @@ data class MongoCollectionName(
  */
 class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : DataStore {
     private val accounts = db.getCollection<PlayerAccount>(collectionName.playerAccount)
+
     private val playerObjects = db.getCollection<PlayerObjects>(collectionName.playerObjects)
+    private val neighbors = db.getCollection<NeighborHistory>(collectionName.neighborHistory)
+    private val inventories = db.getCollection<Inventory>(collectionName.inventory)
+
     private val playerServerObjects = db.getCollection<PlayerServerObjects>(collectionName.playerServerObjects)
     private val serverObjects = db.getCollection<ServerObjects>(collectionName.serverObjects)
 
@@ -92,6 +101,14 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
         return playerObjects.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
     }
 
+    override suspend fun getNeighbourHistory(playerId: PlayerId): NeighborHistory? {
+        return neighbors.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
+    }
+
+    override suspend fun getInventory(playerId: PlayerId): Inventory? {
+        return inventories.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
+    }
+
     override suspend fun getPlayerServerObjects(playerId: PlayerId): PlayerServerObjects? {
         return playerServerObjects.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
     }
@@ -104,18 +121,22 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
     override suspend fun create(
         account: PlayerAccount,
         playerObjects: PlayerObjects,
+        neighborHistory: NeighborHistory,
+        inventory: Inventory,
         playerServerObjects: PlayerServerObjects
     ): Result<Unit> {
         return try {
             val accountAck = accounts.insertOne(account).wasAcknowledged()
             val pObjAck = this.playerObjects.insertOne(playerObjects).wasAcknowledged()
+            val neighAck = this.neighbors.insertOne(neighborHistory).wasAcknowledged()
+            val invAck = this.inventories.insertOne(inventory).wasAcknowledged()
             val psObjAck = this.playerServerObjects.insertOne(playerServerObjects).wasAcknowledged()
 
-            if (accountAck && pObjAck && psObjAck) {
+            if (accountAck && pObjAck && psObjAck && neighAck && invAck) {
                 Result.success(Unit)
             } else {
                 Fancam.error(tag = Tags.Datastore) {
-                    "MongoDB creation not acknowledged: playerId=${account.playerId}, accountAck=$accountAck, pObjAck=$pObjAck, psObjAck=$psObjAck"
+                    "MongoDB creation not acknowledged: playerId=${account.playerId}, accountAck=$accountAck, pObjAck=$pObjAck, psObjAck=$psObjAck, neighAck=$neighAck, invAck=$invAck"
                 }
                 Result.failure(
                     IllegalStateException("MongoDB insert not acknowledged")
@@ -125,6 +146,14 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
             Fancam.error(e, Tags.Datastore) { "MongoDB creation failed: playerId=${account.playerId}" }
             Result.failure(e)
         }
+    }
+
+    override suspend fun <T> updatePlayerObjectsField(
+        playerId: String, path: String, value: T
+    ) {
+        val filter = Filters.eq(FieldPlayerId, playerId)
+        val update = Updates.set(path, value)
+        playerObjects.updateOne(filter, update)
     }
 
     override suspend fun delete(playerId: PlayerId): Result<Unit> {
