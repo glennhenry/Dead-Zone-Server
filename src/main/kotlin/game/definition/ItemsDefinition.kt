@@ -43,7 +43,7 @@ class ItemsDefinition : GameDefinition {
     val itemsByLootable = mutableMapOf<String, MutableList<ItemResource>>()
 }
 
-class ItemsParser : GameDataLoader {
+class ItemsXmlDataLoader : GameDataLoader {
     override fun produce(source: GameDataSource): List<GameDefinition> {
         val def = ItemsDefinition()
 

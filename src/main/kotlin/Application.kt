@@ -19,6 +19,8 @@ import encore.venue.Venue
 import encore.websocket.handler.WsCommandHandler
 import game.GameIdentity
 import game.Globals
+import game.definition.ItemsXmlDataLoader
+import game.definition.XmlDataSource
 import game.domain.compound.model.Building
 import game.domain.compound.model.BuildingLike
 import game.domain.compound.model.JunkBuilding
@@ -184,7 +186,7 @@ fun commandHandlers(serverContext: ServerContext) {
 
 fun gameReference() {
     GameReference.initialize {
-        // add()
+        add(XmlDataSource("assets/game/data/xml/items.xml.gz"), ItemsXmlDataLoader())
     }
 }
 
