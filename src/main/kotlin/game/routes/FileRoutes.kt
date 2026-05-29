@@ -21,6 +21,8 @@ fun Route.fileRoutes() {
         call.respondFile(File("assets/index.html"))
     }
     staticFiles("site", File("assets/site"))
+    staticFiles("/game", File("assets/game/"))
+    staticFiles("/crossdomain.xml", File("assets/crossdomain.xml"))
 
     val docsDir = File("docs_build")
     if (File(docsDir, "index.html").exists()) {
