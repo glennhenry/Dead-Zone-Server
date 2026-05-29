@@ -25,6 +25,7 @@ import game.domain.compound.model.Building
 import game.domain.compound.model.BuildingLike
 import game.domain.compound.model.JunkBuilding
 import game.routes.ApiRoutes
+import game.routes.AuthRoutes
 import game.routes.DebugLogRoutes
 import game.routes.caseInsensitiveStaticResources
 import game.routes.fileRoutes
@@ -137,6 +138,7 @@ suspend fun Application.configureApplication() {
         with(BackstageRoutes(serverContext, backstageToken)) { install() }
         with(DebugLogRoutes(serverContext.webSocketManager)) { install() }
         with(ApiRoutes(serverContext)) { install() }
+        with(AuthRoutes(serverContext)) { install() }
     }
 
     // log startup
