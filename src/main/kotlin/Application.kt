@@ -5,7 +5,6 @@ import encore.backstage.command.ExampleCommand
 import encore.context.ServerContext
 import encore.datastore.MongoCollectionName
 import encore.definition.GameReference
-import encore.fancam.Fancam
 import encore.network.lifecycle.PlayerLifecycle
 import encore.network.stage.GameStage
 import encore.network.stage.GameStageInitContext
@@ -20,7 +19,21 @@ import encore.venue.Venue
 import encore.websocket.handler.WsCommandHandler
 import game.GameIdentity
 import game.Globals
-import game.fileRoutes
+import game.domain.compound.model.Building
+import game.domain.compound.model.BuildingLike
+import game.domain.compound.model.JunkBuilding
+import game.routes.ApiRoutes
+import game.routes.DebugLogRoutes
+import game.routes.caseInsensitiveStaticResources
+import game.routes.fileRoutes
+import game.socket.handler.AuthHandler
+import game.socket.handler.InitCompleteHandler
+import game.socket.handler.JoinHandler
+import game.socket.handler.QuestProgressHandler
+import game.socket.handler.RequestSurvivorCheckHandler
+import game.socket.handler.SaveHandler
+import game.socket.handler.ZombieAttackHandler
+import game.socket.protocol.PioFanchantGuide
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -29,6 +42,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import java.io.File
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
 
@@ -49,6 +64,8 @@ fun main() {
 val MongoCollectionName = MongoCollectionName(
     playerAccount = "player_account",
     playerObjects = "player_objects",
+    neighborHistory = "neighbor_history",
+    inventory = "inventory",
     playerServerObjects = "player_server_objects",
     serverObjects = "server_objects"
 )
@@ -71,7 +88,12 @@ suspend fun Application.configureApplication() {
 
     // setup the framework
     val (mongoc, db) = installEncore(
-        module = SerializersModule { },
+        module = SerializersModule {
+            polymorphic(BuildingLike::class) {
+                subclass(Building::class, Building.serializer())
+                subclass(JunkBuilding::class, JunkBuilding.serializer())
+            }
+        },
         security = security
     )
 
@@ -83,6 +105,7 @@ suspend fun Application.configureApplication() {
     val serverContext = createServerContext(
         appScope = appScope,
         serverSubunitScope = serverSubunitScope,
+        collectionName = MongoCollectionName,
         mongoClient = mongoc,
         mongoDatabase = db
     )
@@ -108,7 +131,10 @@ suspend fun Application.configureApplication() {
     // install routes
     routing {
         fileRoutes()
+        caseInsensitiveStaticResources("/game/data", File("assets"))
         with(BackstageRoutes(serverContext, backstageToken)) { install() }
+        with(DebugLogRoutes(serverContext.webSocketManager)) { install() }
+        with(ApiRoutes(serverContext)) { install() }
     }
 
     // log startup
@@ -121,7 +147,7 @@ suspend fun Application.configureApplication() {
     ) {
         lifecycleHooks()
         fanchantGuides()
-        handlers()
+        handlers(serverContext)
     }
 
     val servers = buildList<Stage> {
@@ -166,7 +192,7 @@ fun GameStageInitContext.lifecycleHooks() {
     // register player lifecycle hooks...
 
     hook(PlayerLifecycle.OnReceive, "Update activity") { serverContext, connection ->
-        serverContext.subunits.presence.updateLastActivity(connection.playerId)
+        serverContext.subunits.presence.updateLastLogin(connection.playerId)
     }
 
     hook(PlayerLifecycle.OnDisconnect, "Player cleanup") { serverContext, connection ->
@@ -174,7 +200,7 @@ fun GameStageInitContext.lifecycleHooks() {
         val pid = connection.playerId
         if (pid != "[Undetermined]") {
             serverContext.subunits.presence.markOffline(pid)
-            serverContext.subunits.account.updateLastActivity(pid, TimeCenter.system.now())
+            serverContext.subunits.account.updateLastLogin(pid, TimeCenter.system.now())
             serverContext.contextRegistry.getContext(pid)
                 ?.subunits
                 ?.all()
@@ -187,11 +213,17 @@ fun GameStageInitContext.lifecycleHooks() {
 fun GameStageInitContext.fanchantGuides() {
     // register fanchant guides...
 
-    // guide()
+    guide(PioFanchantGuide())
 }
 
-fun GameStageInitContext.handlers() {
+fun GameStageInitContext.handlers(serverContext: ServerContext) {
     // register handlers
 
-    // handler()
+    handler(JoinHandler(serverContext))
+    handler(AuthHandler())
+    handler(QuestProgressHandler())
+    handler(InitCompleteHandler(serverContext))
+    handler(SaveHandler(serverContext))
+    handler(ZombieAttackHandler(serverContext))
+    handler(RequestSurvivorCheckHandler())
 }
