@@ -48,8 +48,8 @@ const val survivorNewJson = """
 {
   "id": "",
   "title": "",
-  "firstName": "Jesse",
-  "lastName": "Pinkman",
+  "firstName": "Shen",
+  "lastName": "Xiaoting",
   "gender": "male",
   "classId": "unassigned",
   "voice": "white-m"
