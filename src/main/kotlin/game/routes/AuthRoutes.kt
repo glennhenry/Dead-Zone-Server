@@ -51,10 +51,10 @@ class AuthRoutes(private val serverContext: ServerContext) : RouteHandler {
                     return@handle
                 }
 
-                val usernameExist = serverContext.subunits.auth.isUsernameAvailable(username)
-                val outcome = usernameExist.okOrThrow()
+                val outcome = serverContext.subunits.auth.isUsernameAvailable(username)
+                val usernameAvailable = outcome.okOrThrow()
 
-                if (outcome) {
+                if (!usernameAvailable) {
                     when (val result = serverContext.subunits.auth.login(username, password).okOrThrow()) {
                         is LoginResult.AccountNotFound -> {
                             call.respond(
@@ -105,10 +105,10 @@ class AuthRoutes(private val serverContext: ServerContext) : RouteHandler {
                 }
 
                 try {
-                    val exists = serverContext.subunits.auth.isUsernameAvailable(username).okOrThrow()
-                    call.respondText(if (exists) "yes" else "no")
+                    val available = serverContext.subunits.auth.isUsernameAvailable(username).okOrThrow()
+                    call.respondText(if (available) "no" else "yes")
                 } catch (e: Exception) {
-                    Fancam.error { "Failed to check if user exists: $username, e.message:${e.message}" }
+                    Fancam.error(e) { "Failed to check if user exists: $username" }
                     call.respond(HttpStatusCode.InternalServerError, mapOf("reason" to "Database error"))
                 }
             }
