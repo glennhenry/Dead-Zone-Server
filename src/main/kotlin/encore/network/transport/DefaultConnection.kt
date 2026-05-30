@@ -64,6 +64,8 @@ class DefaultConnection(
             }
             outputChannel.writeFully(input)
             onSend(this)
+        } catch (_: ClosedWriteChannelException) {
+            Fancam.info(Tags.Socket) { "Aborting write because connection is closed for $this" }
         } catch (e: Exception) {
             Fancam.error(e, Tags.Socket) { "Failed to write to $this" }
             throw e
