@@ -13,12 +13,17 @@ import game.socket.protocol.PIOSerializer
  * @param type The type of the message (e.g., "gr", "ic")
  * @param args Any number of message content
  */
-suspend fun Connection.sendPIOMessage(type: String, vararg args: Any, logFull: Boolean = false) {
+suspend fun Connection.sendPIOMessage(
+    type: String,
+    vararg args: Any,
+    logOutput: Boolean = true,
+    logFull: Boolean = false
+) {
     val msg = buildList {
         add(type)
         addAll(args)
     }
     val bytes = PIOSerializer.serialize(msg)
 
-    this.write(bytes)
+    this.write(bytes, logOutput, logFull)
 }
