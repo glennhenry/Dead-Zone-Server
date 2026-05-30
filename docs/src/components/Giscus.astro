@@ -6,20 +6,9 @@
     return htmlTheme === "dark" ? "catppuccin_mocha" : "catppuccin_latte";
   }
 
-  /* CHANGEME
-     Giscus setup (only if code is posted on GitHub; if not, please empty the fields):
-     1. Create discussion on github via settings to enable discussion.
-     2. Delete all category except "General".
-     3. Create category called "Giscus".
-     4. Go to 'https://giscus.app/', insert repo name and category name of "Giscus".
-     5. Copy and paste here the repo-id and category-id.
-     6. Comment will show up under "Giscus" category for each page.
-  */
-
   function loadGiscus(theme) {
     const script = document.createElement("script");
     script.src = "https://giscus.app/client.js";
-    /* CHANGEME */
     script.setAttribute("data-repo", "glennhenry/Dead-Zone-Server");
     script.setAttribute("data-repo-id", "R_kgDOSqaQ8w");
     script.setAttribute("data-category", "Giscus");

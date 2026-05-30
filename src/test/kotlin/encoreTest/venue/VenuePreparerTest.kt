@@ -75,7 +75,7 @@ class VenuePreparerTest {
                     <admin enabled="true" />
                     <database>
                         <mongo>
-                            <dbname>CHANGE_ME-prod-DB</dbname>
+                            <dbname>DZ_Server-prod-DB</dbname>
                             <dburl>mongodb://localhost:27017</dburl>
                         </mongo>
                     </database>
@@ -111,7 +111,7 @@ class VenuePreparerTest {
         assertEquals(true, config.devMode)
         assertEquals("localhost", config.server.host)
         assertEquals(21, config.fancam.fileNamePadding)
-        assertEquals("CHANGE_ME-prod-DB", config.database.dbName)
+        assertEquals("DZ_Server-prod-DB", config.database.dbName)
         assertEquals(5, config.fancam.maxFileRotation)
         assertEquals(123, custom.child)
     }
@@ -130,7 +130,7 @@ class VenuePreparerTest {
                     <admin enabled="true" />
                     <database>
                         <mongo>
-                            <dbname>CHANGE_ME-prod-DB</dbname>
+                            <dbname>DZ_Server-prod-DB</dbname>
                             <dburl>mongodb://localhost:27017</dburl>
                         </mongo>
                     </database>
@@ -186,7 +186,7 @@ class VenuePreparerTest {
                     <admin enabled="true" />
                     <database>
                         <mongo>
-                            <dbname>CHANGE_ME-prod-DB</dbname>
+                            <dbname>DZ_Server-prod-DB</dbname>
                             <dburl>mongodb://localhost:27017</dburl>
                         </mongo>
                     </database>

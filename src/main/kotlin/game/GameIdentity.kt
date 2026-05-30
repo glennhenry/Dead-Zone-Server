@@ -21,5 +21,5 @@ import encore.EncoreIdentity
 object GameIdentity {
     const val Title = "DeadZoneServer"
     const val Version = "1.0.0"
-    const val Description = "DZ Revival (trial refactor edition)"
+    const val Description = "DZ Server (refactor edition)"
 }
