@@ -3,7 +3,7 @@ package game.routes.rpc
 import encore.context.ServerContext
 import encore.datastore.collection.NeighborHistory
 import encore.fancam.Fancam
-import encore.utils.types.okOrThrow
+import encore.utils.types.okOrNull
 import game.domain.login.LazyDataUpdater
 import game.routes.message.db.BigDBObject
 import game.routes.message.db.LoadObjectsArgs
@@ -35,8 +35,8 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
     for (objId in loadObjectsArgs.objectIds) {
         val playerId = objId.keys.firstOrNull() ?: continue
         // the game for unknown reason keep requesting the same playerId infinitely
-        // this is to ensure the requested player does actually exists
-        val profile = serverContext.subunits.account.getProfile(playerId).okOrThrow() ?: continue
+        // this is reflected on id suffixed like id123-2
+        val profile = serverContext.subunits.account.getProfile(playerId).okOrNull() ?: continue
 
         val playerObjects = serverContext.dataStore.getPlayerObjects(playerId)!!
         val neighborHistory = serverContext.dataStore.getNeighbourHistory(playerId)!!
