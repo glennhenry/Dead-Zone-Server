@@ -113,6 +113,9 @@ suspend fun Application.configureApplication() {
         mongoDatabase = db
     )
 
+    // initialize GameReference and register definitions
+    gameReference()
+
     // create admin account
     if (Venue.encore.adminEnabled) {
         serverContext.subunits.creation.createAdmin(Globals, alwaysRecreate = false)
@@ -124,8 +127,6 @@ suspend fun Application.configureApplication() {
     // register commands
     commandHandlers(serverContext)
 
-    // initialize GameReference and register definitions
-    gameReference()
 
     // configure routing
     // ephemeral token storage for /backstage entry
