@@ -1,12 +1,13 @@
-# Encore
+# Dead Zone Server
 
 <img src="progress.png" alt="progress image" width=600/>
+<img src="progress2.png" alt="progress image" width=600/>
 
 Server emulator for Dead Zone.
 
 This project is intentionally not finished and is already abandoned. This repository is only an archive.
 
-*This project tries to reconstruct the game server-side behavior. Client files and assets are not included. This project is not official and is not associated with the original creators.*
+_This project tries to reconstruct the game server-side behavior. Client files and assets are not included. This project is not official and is not associated with the original creators._
 
 Made with [Encore](https://github.com/glennhenry/Encore).
 
