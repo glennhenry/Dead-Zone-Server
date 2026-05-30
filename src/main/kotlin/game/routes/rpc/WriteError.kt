@@ -25,7 +25,7 @@ suspend fun RoutingContext.writeError() {
         call.receiveChannel().toByteArray()
     )
 
-    Fancam.error(tag = "write error") { writeErrorArgs.toString() }
+    Fancam.error(tag = "writeerror") { writeErrorArgs.toString() }
 
     if (writeErrorArgs.details.contains("Load Never Completed", ignoreCase = true) ||
         writeErrorArgs.details.contains("Resource not found", ignoreCase = true) ||

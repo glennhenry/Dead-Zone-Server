@@ -34,11 +34,6 @@ class JoinHandler(private val serverContext: ServerContext) : FanchantHandler<Pi
         val userId = fanchant.getString("serviceUserId")
             ?: throw IllegalArgumentException("No userId for connection: $connection")
 
-        val username = fanchant.getString("nickname")
-        if (username == null) {
-            Fancam.warn { "nickname key is null" }
-        }
-
         val displayName = serverContext.subunits.account.getProfile(userId).okOrNull()?.displayName ?: "noname"
         connection.acknowledge(userId, displayName)
 

@@ -20,11 +20,11 @@ class PioFanchant(
     override val type: FanchantType<*> = PioFanchantType(messageType)
 
     private val data: Map<String, Any?> = buildMap {
-        val start = if (type.id != "<no-type>") 1 else 0
         val end = raw.size
-        for (i in start until end step 2) {
+        for (i in 0 until end step 2) {
             val key = raw.getOrNull(i) as? String ?: continue
             val value = raw.getOrNull(i + 1)
+            println("$key=$value")
             put(key, value)
         }
     }
@@ -75,12 +75,7 @@ class PioFanchant(
 
     companion object {
         fun fromRaw(raw: List<Any>): PioFanchant {
-            val type: String = if (raw.size % 2 == 1 && raw.size != 1) {
-                raw.firstOrNull() as? String ?: "<no-type>"
-            } else {
-                "<no-type>"
-            }
-
+            val type = raw.firstOrNull() as? String ?: "<no-type>"
             return PioFanchant(type, raw)
         }
     }
