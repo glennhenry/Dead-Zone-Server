@@ -18,7 +18,6 @@ class PioFanchant(
     private val raw: List<Any>
 ) : Fanchant {
     override val type: FanchantType<*> = PioFanchantType(messageType)
-    private var hasType: Boolean = false
 
     private val data: Map<String, Any?> = buildMap {
         val start = if (type.id != "<no-type>") 1 else 0
