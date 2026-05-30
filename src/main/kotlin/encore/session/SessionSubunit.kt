@@ -9,6 +9,7 @@ import encore.time.MutableTimekeeper
 import encore.time.Timekeeper
 import game.Globals
 import encore.utils.identifier.Ids
+import io.ktor.util.date.getTimeMillis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -127,7 +128,7 @@ class SessionSubunit(
      * @return `null` if the token is invalid.
      */
     fun getUserId(token: String): String? {
-        return sessions[token]?.takeIf { timekeeper.isBeforeNow(it.expiresAt) }?.userId
+        return sessions[token]?.takeIf { timekeeper.isAfterNow(it.expiresAt) }?.userId
     }
 
     /**
