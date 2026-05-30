@@ -28,7 +28,7 @@ class TimeUpdateAct : StageAct<TimeUpdateActConcept> {
     }
 
     override suspend fun perform(concept: TimeUpdateActConcept, performNumber: Int) {
-        concept.connection.sendPIOMessage(NetworkMessage.TIME_UPDATE, TimeCenter.game.nowInDouble(), false)
+        concept.connection.sendPIOMessage(NetworkMessage.TIME_UPDATE, TimeCenter.game.nowInDouble(), logOutput = false)
     }
 }
 
