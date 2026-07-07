@@ -49,7 +49,6 @@ class GameStage(
 
     private val fanchantGuideRegistry = FanchantGuideRegistry()
     private val fanchantCoordinator = FanchantCoordinator()
-    private val playerLifecycleHandler = PlayerLifecycleHandler()
 
     private var running = false
 
@@ -58,7 +57,7 @@ class GameStage(
         this.serverContext = context
         initBlock(
             GameStageInitContext(
-                playerLifecycleHandler,
+                serverContext.playerLifecycleHandler,
                 fanchantCoordinator,
                 fanchantGuideRegistry
             )
@@ -93,7 +92,7 @@ class GameStage(
                         inputChannel = socket.openReadChannel(),
                         outputChannel = socket.openWriteChannel(autoFlush = true),
                         remoteAddress = socket.remoteAddress.toString(),
-                        onSend = { playerLifecycleHandler.onSend(serverContext, it) },
+                        onSend = { serverContext.playerLifecycleHandler.onSend(serverContext, it) },
                         connectionScope = connectionScope
                     )
                     activateConnection(connection)
@@ -110,7 +109,7 @@ class GameStage(
 
     suspend fun activateConnection(connection: Connection) {
         Fancam.info(Tags.Socket) { "New $connection" }
-        playerLifecycleHandler.onConnect(serverContext, connection)
+        serverContext.playerLifecycleHandler.onConnect(serverContext, connection)
         processConnection(connection)
     }
 
@@ -130,7 +129,7 @@ class GameStage(
                         break
                     }
 
-                    playerLifecycleHandler.onReceive(serverContext, connection)
+                    serverContext.playerLifecycleHandler.onReceive(serverContext, connection)
 
                     // start handle
                     var fanchantType = "[Undetermined]"
@@ -156,7 +155,7 @@ class GameStage(
             } catch (e: Exception) {
                 Fancam.error(e, Tags.Socket) { "Scandal in $connection" }
             } finally {
-                playerLifecycleHandler.onDisconnect(serverContext, connection)
+                serverContext.playerLifecycleHandler.onDisconnect(serverContext, connection)
                 connection.shutdown()
             }
         }
