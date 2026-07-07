@@ -4,9 +4,9 @@ slug: api-server
 description: API Server
 ---
 
-TLSDZ utilizes RPC to make requests to the API server by invoking the `Request` method in [`HTTPChannel`](/playerio/utils/httpchannel). Additionally, both requests and responses are formatted using Protobuf.
+TLSDZ utilizes RPC to make requests to the API server by invoking the `Request` method in [`HTTPChannel`](docs/playerio/utils/httpchannel). Additionally, both requests and responses are formatted using Protobuf.
 
-All expected messages for input (arguments), output, and errors can be found in the [`playerio.generated.messages`](/playerio/generated/messages/generatedmessages) package. The server follows the input message format for making requests, and our server must respond to the API with the expected output message. The error format typically only contains error code and message.
+All expected messages for input (arguments), output, and errors can be found in the [`playerio.generated.messages`](docs/playerio/generated/messages/generatedmessages) package. The server follows the input message format for making requests, and our server must respond to the API with the expected output message. The error format typically only contains error code and message.
 
 Below is a list of API requests made by the game, along with the expected messages defined in the `.proto` file.
 

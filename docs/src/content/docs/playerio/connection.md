@@ -8,11 +8,11 @@ This class represents a client connection to the socket server. It manages real-
 
 ## Internal Logic
 
-Connection class is constructed with the given endpoint from API server responding to [API 27](/api-server#api-27).
+Connection class is constructed with the given endpoint from API server responding to [API 27](/docs/api-server#api-27).
 
 ### Constructor
 
-In the constructor, it initializes an instance of the [serializer](/playerio/utils/binaryserializer) and listens for incoming [network messages](/playerio/message) using the `onMessage` event, calling the appropriate [message handler](#handlemessage) (explained below) as needed.
+In the constructor, it initializes an instance of the [serializer](docs/playerio/utils/binaryserializer) and listens for incoming [network messages](docs/playerio/message) using the `onMessage` event, calling the appropriate [message handler](#handlemessage) (explained below) as needed.
 
 ### doConnect
 
@@ -28,7 +28,7 @@ It then calls the private `doConnect` method which sets event listeners for the 
 
 This method is called when the `onMessage` event is triggered and is responsible for handling the received message.
 
-- If the message type is the special (hardcoded) `"playerio.joinresult"`, the message is expected to contain a boolean indicating whether the "join" message from `connect` listener of `doConnect` method was successful. If the boolean is `false` or missing, it attempts to extract a string and error code to construct a [PlayerIOError](/playerio/playerioerror).
+- If the message type is the special (hardcoded) `"playerio.joinresult"`, the message is expected to contain a boolean indicating whether the "join" message from `connect` listener of `doConnect` method was successful. If the boolean is `false` or missing, it attempts to extract a string and error code to construct a [PlayerIOError](docs/playerio/playerioerror).
 - For all other message types, it checks if a matching message handler has been registered and calls it.
 
 Example of how message handlers are registered:
@@ -42,5 +42,5 @@ this._connection.addMessageHandler(NetworkMessage.SERVER_INIT_PROGRESS,this.onSe
 ```
 
 :::note
-[List of network message type](/thelaststand/app/network/networkmessage).
+[List of network message type](/docs/thelaststand/app/network/networkmessage).
 :::

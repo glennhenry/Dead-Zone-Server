@@ -19,7 +19,7 @@ The `Main` class (`thelaststand.preloader.core/Main.as`) is the entry point for 
   - Add the background, logo (if needed), noise overlay, progress bar, spinner, and status text to the stage.
   - Notify JavaScript that the preloader is ready.
   - Animate the background and schedule the PlayerIO connection.
-- When the PlayerIO connection completes ([`onPlayerIOConnected`](/thelaststand/app/network/playerioconnector#onplayerioconnected)), `loadCore()` is called to:
+- When the PlayerIO connection completes ([`onPlayerIOConnected`](/docs/thelaststand/app/network/playerioconnector#onplayerioconnected)), `loadCore()` is called to:
   - Build the URL for the core SWF, set security permissions, and start loading the core game file.
   - Update the status text and loader context.
   - Validate the origin of the loaded file.

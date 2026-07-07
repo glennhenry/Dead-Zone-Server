@@ -13,4 +13,4 @@ var inventoryObject:DatabaseObject = param2;
 playerObject["inventory"] = inventoryObject;
 ```
 
-The utility class [`Converter`](/playerio/utils/converter) is used to convert raw `BigDBObject` into this `DatabaseObject`.
+The utility class [`Converter`](docs/playerio/utils/converter) is used to convert raw `BigDBObject` into this `DatabaseObject`.

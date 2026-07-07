@@ -8,7 +8,7 @@ description: GameFS
 Part of PlayerIO backend services. Source: https://playerio.com/documentation/services/gamefs/.
 :::
 
-`GameFS` is used to store and distribute game files to players. TLSDZ access `GameFS` through the [`PlayerIO`](/playerio/playerio) client library.
+`GameFS` is used to store and distribute game files to players. TLSDZ access `GameFS` through the [`PlayerIO`](docs/playerio/playerio) client library.
 
 ```actionscript-3
 // thelaststand.preloader.core/Main.as
@@ -30,7 +30,7 @@ return (param3 ? "https" : "http") + "://127.0.0.1:8080/r/" + param1 + param2;
 
 - `param3` should be the secure flag.
 - The string is TLSDZ domain name. In this case, we should replace it to our domain (e.g., 127.0.0.1).
-- `param1` is the `gameId`. See [`gameId`](/dictionary#gameid)
+- `param1` is the `gameId`. See [`gameId`](/docs/dictionary#gameid)
 - `param2` is a game file path. The `GameFS` enforce file path to start with a slash (/).
 
 It will produce a URL like `http://127.0.0.1:8080/r/dev-the-last-stand-iret8ormbeshajyk6woewg/preloader.swf`.

@@ -11,13 +11,13 @@ An important class which serves as the central hub for all client-server communi
 - Processing server responses and forwarding relevant data to game managers.
 - Maintaining connection state, authentication, and player-related metadata.
 
-First interaction with this class is [core main](/core-main) calling `connect()` method to make a request to [API 27 (CreateJoinRoom)](/api-server#api-27).
+First interaction with this class is [core main](/docs/core-main) calling `connect()` method to make a request to [API 27 (CreateJoinRoom)](/docs/api-server#api-27).
 
 ## onRoomJoined
 
-This method is called after a successful join result is received in the [Connection](/playerio/connection#handlemessage) class. It updates `connected` property and dispatch a connected signal to inform other class (e.g., core main updates the loading screen).
+This method is called after a successful join result is received in the [Connection](docs/playerio/connection#handlemessage) class. It updates `connected` property and dispatch a connected signal to inform other class (e.g., core main updates the loading screen).
 
-Next, [message handlers for network requests](/playerio/connection#handlemessage) are registered, such as:
+Next, [message handlers for network requests](docs/playerio/connection#handlemessage) are registered, such as:
 
 ```as3
 this._connection.addMessageHandler(NetworkMessage.GAME_READY, this.onGameReady);
@@ -42,7 +42,7 @@ Then, it parses each value of the message.
 - The `binaries` is parsed through the `parseBinaries` method. Inside, it decodes the gzip and notify core main through `onNetworkGameDataReceived` method to replace the existing resource. Our hypothesis is that the resources sent from server are additional data based on player's data that replaces the original resource.
 - The JSON dumps are parsed, and the data is assigned to the local variable of `Network` for further access by other classes.
 
-The rest of the method loads player's data from [BigDB](/playerio/bigdb) by making requests to [API 85](/api-server#api-85) (load objects). The objects are `PlayersObject`, `NeighborHistory`, and `Inventory`.
+The rest of the method loads player's data from [BigDB](docs/playerio/bigdb) by making requests to [API 85](/docs/api-server#api-85) (load objects). The objects are `PlayersObject`, `NeighborHistory`, and `Inventory`.
 
 If all three objects follows the protobuf format correctly, the `onPlayerDataLoaded` method is called.
 

@@ -4,11 +4,11 @@ slug: thelaststand/app/network/networkmessage
 description: NetworkMessage
 ---
 
-TLSDZ uses the [`Message`](/playerio/message) object for communication. The `NetworkMessage` class contains a list of static string constants that define the types of messages used in the game's communication between the client and the socket server.
+TLSDZ uses the [`Message`](docs/playerio/message) object for communication. The `NetworkMessage` class contains a list of static string constants that define the types of messages used in the game's communication between the client and the socket server.
 
 ## List of Network Messages
 
-Additionally, `"playerio.joinresult"` which is hardcoded in [`Connection`](/playerio/connection) for initial server connection.
+Additionally, `"playerio.joinresult"` which is hardcoded in [`Connection`](docs/playerio/connection) for initial server connection.
 
 ```
 INIT_COMPLETE              = "ic"      | ERROR                          = "err"

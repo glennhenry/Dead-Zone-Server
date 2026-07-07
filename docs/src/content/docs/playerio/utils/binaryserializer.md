@@ -66,7 +66,7 @@ The message will be serialized to `\x83\xd3playerio.joinresult\x00\x8b\xe7Failed
 
 ## Deserialization
 
-Socket data is received from the [`Connection`](/playerio/connection) class. A deserialized message is then passed alongside the `onMessage` event.
+Socket data is received from the [`Connection`](docs/playerio/connection) class. A deserialized message is then passed alongside the `onMessage` event.
 
 Based on `playerio.utils.BinarySerializer@line 119 | AddByte()`:
 
