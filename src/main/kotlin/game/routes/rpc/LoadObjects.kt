@@ -36,6 +36,8 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
         val playerId = objId.keys.firstOrNull() ?: continue
         // the game for unknown reason keep requesting the same playerId infinitely
         // this is reflected on id suffixed like id123-2
+        // valid UUID won't end with -2
+        if (playerId.endsWith("-2")) continue
         val profile = serverContext.subunits.account.getProfile(playerId).okOrNull() ?: continue
 
         val playerObjects = serverContext.dataStore.getPlayerObjects(playerId)!!
