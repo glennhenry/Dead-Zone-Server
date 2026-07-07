@@ -2,9 +2,11 @@ package encore.context
 
 import encore.datastore.collection.PlayerAccount
 import encore.datastore.collection.PlayerId
+import encore.fancam.Fancam
 import encore.network.transport.Connection
 import encore.subunit.Subunit
 import encore.subunit.scope.PlayerScope
+import encore.utils.support.className
 import game.domain.compound.BlankCompoundRepository
 import game.domain.compound.CompoundSubunit
 import game.domain.items.BlankInventoryRepository
@@ -57,6 +59,30 @@ data class PlayerSubunits(
      */
     fun all(): Set<Subunit<PlayerScope>> {
         return setOf(survivor, compound, inventory, playerObjectMetadata)
+    }
+
+    /**
+     * Debut every player subunit instances with [scope].
+     */
+    suspend fun debut(scope: PlayerScope) {
+        all().forEach { subunit ->
+            val result = subunit.debut(scope)
+            if (result.isFailure) {
+                Fancam.error(result.exceptionOrNull()) { "Result.failure on PlayerSubunit debut '${subunit.className()}'" }
+            }
+        }
+    }
+
+    /**
+     * Disband every player subunit instances with [scope].
+     */
+    suspend fun disband(scope: PlayerScope) {
+        all().forEach { subunit ->
+            val result = subunit.disband(scope)
+            if (result.isFailure) {
+                Fancam.error(result.exceptionOrNull()) { "Result.failure on PlayerSubunit disband '${subunit.className()}'" }
+            }
+        }
     }
 
     companion object {

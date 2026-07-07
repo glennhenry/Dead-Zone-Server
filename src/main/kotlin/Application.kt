@@ -1,5 +1,6 @@
 import bootstrap.*
 import encore.EncoreIdentity
+import encore.EncoreIdentity.celebrate
 import encore.backstage.BackstageRoutes
 import encore.backstage.command.ExampleCommand
 import encore.context.ServerContext
@@ -9,11 +10,11 @@ import encore.network.lifecycle.PlayerLifecycle
 import encore.network.stage.GameStage
 import encore.network.stage.GameStageInitContext
 import encore.network.stage.Stage
+import encore.network.transport.UndeterminedIdentity
 import encore.route.guard.DefaultSecurity
 import encore.subunit.scope.PlayerScope
 import encore.subunit.scope.ServerScope
 import encore.time.TimeCenter
-import encore.time.Timekeeper
 import encore.time.source.SystemTimeSource
 import encore.venue.Venue
 import encore.websocket.handler.WsCommandHandler
@@ -47,6 +48,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.io.File
+import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
 
@@ -80,14 +82,11 @@ val SystemTimezone: ZoneId = ZoneId.systemDefault()
  */
 suspend fun Application.configureApplication() {
     // install system time
-    TimeCenter.update(
-        system = Timekeeper(SystemTimeSource()),
-        game = Timekeeper(SystemTimeSource())
-    )
+    TimeCenter.update(source = SystemTimeSource())
 
     // configure security
     val bannedAddresses = mutableSetOf<String>()
-    val security = DefaultSecurity(bannedAddresses, TimeCenter.system)
+    val security = DefaultSecurity(bannedAddresses, TimeCenter.source)
 
     // setup the framework
     val (mongoc, db) = installEncore(
@@ -126,7 +125,6 @@ suspend fun Application.configureApplication() {
 
     // register commands
     commandHandlers(serverContext)
-
 
     // configure routing
     // ephemeral token storage for /backstage entry
@@ -170,6 +168,7 @@ suspend fun Application.configureApplication() {
 
     // prints encore banner
     println(EncoreIdentity.banner(GameIdentity))
+    celebrate(LocalDate.now(SystemTimezone))
 
     // install shutdown hook
     shutdownHook(appScope, serverSubunitScope, serverContext.subunits, servers)
@@ -197,19 +196,18 @@ fun GameStageInitContext.lifecycleHooks() {
     // register player lifecycle hooks...
 
     hook(PlayerLifecycle.OnReceive, "Update activity") { serverContext, connection ->
-        serverContext.subunits.presence.updateLastLogin(connection.playerId)
+        serverContext.subunits.presence.updateLastActivity(connection.playerId)
     }
 
     hook(PlayerLifecycle.OnDisconnect, "Player cleanup") { serverContext, connection ->
         // Only perform cleanup if playerId is set (player was authenticated)
         val pid = connection.playerId
-        if (pid != "[Undetermined]") {
+        if (pid != UndeterminedIdentity) {
             serverContext.subunits.presence.markOffline(pid)
-            serverContext.subunits.account.updateLastLogin(pid, TimeCenter.system.now())
+            serverContext.subunits.account.updateLastLogin(pid, TimeCenter.now())
             serverContext.contextRegistry.getContext(pid)
                 ?.subunits
-                ?.all()
-                ?.forEach { it.disband(PlayerScope(pid)) }
+                ?.disband(PlayerScope(pid))
             serverContext.contextRegistry.removeContext(pid)
         }
     }
