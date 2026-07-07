@@ -52,7 +52,7 @@ suspend fun createServerContext(
         actStore = ActIdStore
     )
     val commandDispatcher = CommandDispatcher()
-    val playerLifecycleHandler = PlayerLifecycleHandler(logEachHook = true)
+    val playerLifecycleHandler = PlayerLifecycleHandler(logEachHook = false)
     val webSocketManager = WebSocketManager()
 
     // setup ServerSubunits
