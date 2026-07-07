@@ -163,7 +163,7 @@ class OfficialFancam(private val config: EncoreFancamConfig) : FancamTemplate {
         level: Level, throwable: Throwable? = null
     ): LogEvent = LogEvent(
         message = msg,
-        timestamp = TimeCenter.system.now(),
+        timestamp = TimeCenter.now(),
         level = level,
         tag = tag,
         logFull = false,
@@ -179,7 +179,7 @@ class OfficialFancam(private val config: EncoreFancamConfig) : FancamTemplate {
 
     override fun event(level: Level, tag: String): LogEventBuilder {
         return LogEventBuilder(level, tag, sourceResolver.resolve()) { event, fileOnlyOutput ->
-            if (event.level == Level.Off) {
+            if (event.level == Level.Off && !event.tag.contains("kp")) {
                 warn(Tags.Fancam) { "Log with Level.Off is not intended to be used." }
             } else {
                 log(event, fileOnlyOutput)

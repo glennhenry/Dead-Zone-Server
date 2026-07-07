@@ -5,16 +5,15 @@ import encore.acts.choreo.BasicChoreography
 import encore.acts.choreo.Choreography
 import encore.acts.choreo.PerformMode
 import encore.acts.template.runTimer
-import encore.datastore.collection.PlayerId
 import encore.fancam.Fancam
-import encore.time.Timekeeper
+import encore.time.source.TimeSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
-import testUtils.virtualTimekeeper
+import testUtils.virtualTimeSource
 import kotlin.test.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -39,7 +38,7 @@ class ExampleStageAct {
         val pid = "playerABC"
         val bid = "outpost"
 
-        val time = virtualTimekeeper(this)
+        val time = virtualTimeSource(this)
         val director = StageActDirector(time, ActIdStore)
         val repo = BuildingRepo()
         val scope = ActScope(pid, this)
@@ -118,7 +117,7 @@ class BuildingRepo {
 
 class BuildingConstructionAct(
     private val repo: BuildingRepo,
-    private val timekeeper: Timekeeper
+    private val timeSource: TimeSource
 ) : StageAct<BuildingConstructionConcept> {
     override val enableLogging: Boolean = true
 
@@ -145,7 +144,7 @@ class BuildingConstructionAct(
         }
 
         important {
-            val finishAtTimestamp = timekeeper.now() + concept.buildDuration.inWholeMilliseconds
+            val finishAtTimestamp = timeSource.now() + concept.buildDuration.inWholeMilliseconds
             repo.unfinishedBuildings[concept.buildingId] = finishAtTimestamp
         }
     }
@@ -189,7 +188,7 @@ class BuildingConstructionAct(
 }
 
 data class BuildingConstructionConcept(
-    val playerId: PlayerId,
+    val playerId: String,
     val buildingId: String,
     val buildDuration: Duration,
     // this is like the player's connection to send game message

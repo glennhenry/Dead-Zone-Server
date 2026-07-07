@@ -10,8 +10,8 @@ import encore.network.fanchant.guide.AllRounderFanchantGuide
 import encore.network.fanchant.guide.DecodeResult
 import encore.network.fanchant.guide.FanchantGuide
 import encore.network.fanchant.guide.FanchantGuideRegistry
-import encore.network.handler.DefaultHandlerContext
 import encore.network.handler.FanchantHandler
+import encore.network.handler.HandlerContext
 import encore.network.lifecycle.PlayerLifecycle
 import encore.network.lifecycle.PlayerLifecycleHandler
 import encore.network.transport.Connection
@@ -22,9 +22,8 @@ import encore.utils.startsWithBytes
 import encore.utils.support.className
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
-import io.ktor.utils.io.*
+import io.ktor.utils.io.ClosedByteChannelException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
 import kotlin.system.measureTimeMillis
 
 const val POLICY_FILE_REQUEST = "<policy-file-request/>"
@@ -209,8 +208,8 @@ class GameStage(
 
                     Fancam.debug(Tags.Socket) {
                         buildString {
-                            appendLine("[SOCKET DECODE]")
-                            appendLine("$INDENT type   : ${fanchant.type.id}")
+                            appendLine("[SOCKET DECODE] -> success")
+                            appendLine("$INDENT type   : ${fanchant.type}")
                             append("$INDENT guide  : ${guide.className()}")
                         }
                     }
@@ -224,29 +223,59 @@ class GameStage(
 
         // Allow only one interpretation of the fanchant, if there is multiple
         val (chosenGuide, fanchant) = matched.firstOrNull()
-            ?: (allRounderFanchantGuide to allRounderFanchant(data))
+            ?: run {
+                val guide = allRounderFanchantGuide
+                val chant = allRounderFanchant(data)
+                Fancam.debug(Tags.Socket) {
+                    buildString {
+                        appendLine("[SOCKET DECODE] -> fallback")
+                        appendLine("$INDENT type   : ${chant.type}")
+                        append("$INDENT guide  : ${allRounderFanchantGuide.className()}")
+                    }
+                }
+
+                guide to chant
+            }
 
         if (matched.size > 1) {
             Fancam.warn(Tags.Socket) {
                 buildString {
                     appendLine(
                         "Multiple fanchant guides decoded the same packet: " +
-                                matched.joinToString { "${it.first}/type=${it.second.type.id}" }
+                                matched.joinToString { "${it.first}/type=${it.second.type}" }
                     )
-                    append("$INDENT chosen: $chosenGuide/type=${fanchant.type.id}")
+                    append("$INDENT chosen: $chosenGuide/type=${fanchant.type}")
                 }
             }
         }
 
         // Dispatch fanchant to handler
         val handler = fanchantCoordinator.findHandler(fanchant)
-        val context = DefaultHandlerContext(
+        val context = HandlerContext(
             connection = connection,
             fanchant = fanchant
         )
-        handler.handleUnsafe(context)
 
-        return fanchant.type.id
+        if (!handler.expectedFanchantClass.isInstance(context.fanchant)) {
+            error(
+                buildString {
+                    appendLine("Fanchant handler type mismatch")
+                    appendLine("Handler         : ${handler.className()}")
+                    appendLine("Handler expects : ${handler.expectedFanchantClass.qualifiedName}")
+                    appendLine("Actual message  : ${context.fanchant::class.qualifiedName}")
+                    appendLine("Fanchant type   : '${context.fanchant.type}'")
+                    appendLine()
+                    appendLine("> Ensure FanchantHandler<T> generic type matches the actual message class that the routing type is supposed to be.")
+                    appendLine("> e.g., handler with 'login' fanchantType shouldn't declare 'T' as `MoveMessage` when it should be `LoginMessage`.")
+                }
+            )
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        handler as FanchantHandler<Fanchant>
+        handler.handle(context)
+
+        return fanchant.type
     }
 
     // when no other guide matches, uses AllRounderFanchantGuide

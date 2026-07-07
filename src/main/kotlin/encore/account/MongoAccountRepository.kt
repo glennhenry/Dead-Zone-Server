@@ -32,17 +32,6 @@ class MongoAccountRepository(val accountCollection: MongoCollection<PlayerAccoun
         }
     }
 
-    override suspend fun getProfileByPlayerId(playerId: PlayerId): Result<Profile?> {
-        return runMongoCatching {
-            accountCollection
-                .withDocumentClass<QueryProfile>()
-                .find(Filters.eq(FieldPlayerId, playerId))
-                .projection(Projections.include(FieldProfile))
-                .firstOrNull()
-                ?.profile
-        }
-    }
-
     override suspend fun getPlayerIdByUsername(username: String): Result<PlayerId> {
         return runMongoCatching {
             accountCollection
@@ -56,6 +45,17 @@ class MongoAccountRepository(val accountCollection: MongoCollection<PlayerAccoun
                 )
                 .firstOrNull()
                 ?.playerId
+        }
+    }
+
+    override suspend fun getProfile(playerId: PlayerId): Result<Profile?> {
+        return runMongoCatching {
+            accountCollection
+                .withDocumentClass<QueryProfile>()
+                .find(Filters.eq(FieldPlayerId, playerId))
+                .projection(Projections.include(FieldProfile))
+                .firstOrNull()
+                ?.profile
         }
     }
 

@@ -1,7 +1,6 @@
 package encoreTest.auth
 
 import TestMongoCollectionName
-import com.mongodb.assertions.Assertions
 import encore.account.AccountRepository
 import encore.account.AccountSubunit
 import encore.account.MongoAccountRepository
@@ -14,7 +13,7 @@ import encore.datastore.MongoDataStore
 import encore.datastore.collection.PlayerAccount
 import encore.datastore.collection.PlayerId
 import encore.session.SessionSubunit
-import encore.time.SystemTimekeeper
+import encore.time.source.SystemTimeSource
 import encore.utils.types.Outcome
 import encore.utils.types.okOrThrow
 import initMongo
@@ -24,6 +23,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import testUtils.createProfile
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -47,7 +48,7 @@ class TestAuthSubunit {
         mongoDb.createCollection(TestMongoCollectionName.playerAccount)
 
         val db = MongoDataStore(mongoDb, TestMongoCollectionName)
-        val manager = SessionSubunit(scope(), SystemTimekeeper)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
         val repo = MongoAccountRepository(collection)
         val accountSubunit = AccountSubunit(repo)
         val pcs = PlayerCreationSubunit(db)
@@ -57,11 +58,11 @@ class TestAuthSubunit {
             playerId = "pid12345",
             username = "name",
             hashedPassword = "anypassword",
-            profile = createProfile("pid12345", "name")
+            profile = createProfile("pid12345")
         )
         collection.insertOne(account)
 
-        Assertions.assertFalse(auth.isUsernameAvailable("name").okOrThrow())
+        assertFalse(auth.isUsernameAvailable("name").okOrThrow())
         assertTrue(repo.usernameExists("name").getOrThrow())
     }
 
@@ -73,14 +74,14 @@ class TestAuthSubunit {
         mongoDb.createCollection(TestMongoCollectionName.playerAccount)
 
         val db = MongoDataStore(mongoDb, TestMongoCollectionName)
-        val manager = SessionSubunit(scope(), SystemTimekeeper)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
         val repo = MongoAccountRepository(collection)
         val accountSubunit = AccountSubunit(repo)
         val pcs = PlayerCreationSubunit(db)
         val auth = AuthSubunit(accountSubunit, pcs, manager)
 
         assertTrue(auth.isUsernameAvailable("xyz").okOrThrow())
-        Assertions.assertFalse(repo.usernameExists("xyz").getOrThrow())
+        assertFalse(repo.usernameExists("xyz").getOrThrow())
     }
 
     @Test
@@ -91,15 +92,40 @@ class TestAuthSubunit {
         mongoDb.createCollection(TestMongoCollectionName.playerAccount)
 
         val db = MongoDataStore(mongoDb, TestMongoCollectionName)
-        val manager = SessionSubunit(scope(), SystemTimekeeper)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
         val repo = MongoAccountRepository(collection)
         val accountSubunit = AccountSubunit(repo)
         val pcs = PlayerCreationSubunit(db)
         val auth = AuthSubunit(accountSubunit, pcs, manager)
 
         auth.register("helloworld", "kotlinktor")
-        Assertions.assertFalse(auth.isUsernameAvailable("helloworld").okOrThrow())
+        assertFalse(auth.isUsernameAvailable("helloworld").okOrThrow())
         assertTrue(repo.usernameExists("helloworld").getOrThrow())
+    }
+
+    @Test
+    fun `register failed because username or email is duplicate`() = runTest {
+        val mongoDb = initMongo()
+        val collection = mongoDb.getCollection<PlayerAccount>(TestMongoCollectionName.playerAccount)
+        collection.drop()
+        mongoDb.createCollection(TestMongoCollectionName.playerAccount)
+
+        val db = MongoDataStore(mongoDb, TestMongoCollectionName)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
+        val repo = MongoAccountRepository(collection)
+        val accountSubunit = AccountSubunit(repo)
+        val pcs = PlayerCreationSubunit(db)
+        val auth = AuthSubunit(accountSubunit, pcs, manager)
+
+        auth.register("helloworld1", "kotlinktor")
+        // duplicate username fail
+        val res1 = auth.register("helloworld1", "kotlinktor")
+        assertNull(res1.okOrThrow())
+
+        auth.register("worldhello1", "kotlinktor")
+        // duplicate email fail
+        val res2 = auth.register("worldhello2", "kotlinktor")
+        assertNull(res2.okOrThrow())
     }
 
     @Test
@@ -110,7 +136,7 @@ class TestAuthSubunit {
         mongoDb.createCollection(TestMongoCollectionName.playerAccount)
 
         val db = MongoDataStore(mongoDb, TestMongoCollectionName)
-        val manager = SessionSubunit(scope(), SystemTimekeeper)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
         val repo = MongoAccountRepository(collection)
         val accountSubunit = AccountSubunit(repo)
         val pcs = PlayerCreationSubunit(db)
@@ -129,7 +155,7 @@ class TestAuthSubunit {
         mongoDb.createCollection(TestMongoCollectionName.playerAccount)
 
         val db = MongoDataStore(mongoDb, TestMongoCollectionName)
-        val manager = SessionSubunit(scope(), SystemTimekeeper)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
         val repo = MongoAccountRepository(collection)
         val accountSubunit = AccountSubunit(repo)
         val pcs = PlayerCreationSubunit(db)
@@ -148,16 +174,15 @@ class TestAuthSubunit {
         mongoDb.createCollection(TestMongoCollectionName.playerAccount)
 
         val db = MongoDataStore(mongoDb, TestMongoCollectionName)
-        val manager = SessionSubunit(scope(), SystemTimekeeper)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
         val repo = object : AccountRepository {
             override suspend fun getAccountByPlayerId(playerId: PlayerId): Result<PlayerAccount?> = TODO()
             override suspend fun getAccountByUsername(username: String): Result<PlayerAccount?> = TODO()
             override suspend fun getPlayerIdByUsername(username: String): Result<PlayerId?> = TODO()
             override suspend fun getCredentials(username: String): Result<Credentials?> =
                 Result.failure(RuntimeException("xiaoting"))
-            override suspend fun getProfileByPlayerId(playerId: PlayerId): Result<Profile?> {
-                TODO()
-            }
+
+            override suspend fun getProfile(playerId: PlayerId): Result<Profile?> = TODO()
             override suspend fun updatePlayerAccount(playerId: PlayerId, account: PlayerAccount): Result<Unit> = TODO()
             override suspend fun updateProfile(playerId: PlayerId, profile: Profile): Result<Unit> = TODO()
             override suspend fun updateLastLogin(playerId: PlayerId, lastLogin: Long): Result<Unit> = TODO()
@@ -182,7 +207,7 @@ class TestAuthSubunit {
         mongoDb.createCollection(TestMongoCollectionName.playerAccount)
 
         val db = MongoDataStore(mongoDb, TestMongoCollectionName)
-        val manager = SessionSubunit(scope(), SystemTimekeeper)
+        val manager = SessionSubunit(scope(), SystemTimeSource())
         val repo = MongoAccountRepository(collection)
         val accountSubunit = AccountSubunit(repo)
         val pcs = PlayerCreationSubunit(db)

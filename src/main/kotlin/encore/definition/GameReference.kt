@@ -61,34 +61,37 @@ object GameReference {
         }
         initializeState = 1
 
-        val start1 = TimeCenter.system.now()
+        val start1 = TimeCenter.now()
         Fancam.info(Tags.Reference) { "Initializing GameReference..." }
 
         val ctx = InitContext()
         ctx.block()
         ctx.entries.forEach { (source, loader) ->
-            val start2 = TimeCenter.system.now()
+            val start2 = TimeCenter.now()
             val definitions = loader.produce(source)
-            val finish2 = (TimeCenter.system.now() - start2).milliseconds
+            val finish2 = (TimeCenter.now() - start2).milliseconds
             Fancam.trace(Tags.Reference) {
-                "Loaded '${source.className()}' in ${finish2}ms, produced ${definitions.size} definition entries."
+                "Loaded '${source.className()}' by '${loader.className()}' in ${finish2}, produced ${definitions.size} definition entries."
             }
 
             definitions.forEach { registry[it::class] = it }
         }
 
-        Fancam.info(Tags.Reference) { "GameReference initialized in ${(TimeCenter.system.now() - start1).milliseconds}" }
+        Fancam.info(Tags.Reference) { "GameReference initialized in ${(TimeCenter.now() - start1).milliseconds}" }
         initializeState = 2
     }
 
     /**
      * Retrieves a registered [GameDefinition] of type [T].
      *
-     * @throws IllegalArgumentException if no definition of the requested type is registered.
+     * @throws IllegalArgumentException if the requested definition is not registered.
      */
     inline fun <reified T : Any> get(): T {
         return registry[T::class] as? T
-            ?: throw IllegalArgumentException("Class ${T::class.simpleName} is not registered.")
+            ?: throw IllegalArgumentException(
+                "GameDefintion <${T::class.simpleName}> is not registered. " +
+                        "Call GameReference.initialize() and provide the definition first."
+            )
     }
 }
 

@@ -58,6 +58,11 @@ class MongoAccountRepositoryTest {
         repo.updateLastLogin(newId, 1000)
         assertEquals(1000, repo.getAccountByUsername(name).getOrThrow().profile.lastLogin)
 
+        repo.updateProfile(newId, Profile(newId, createdAt = 1234, lastLogin = 5678))
+        val pr = repo.getAccountByUsername(name).getOrThrow().profile
+        assertEquals(1234, pr.createdAt)
+        assertEquals(5678, pr.lastLogin)
+
         assertTrue(repo.usernameExists(name).getOrThrow())
         assertTrue(repo.emailExists(email).getOrThrow())
     }

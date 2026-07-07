@@ -11,12 +11,12 @@ fun createAccount(playerId: PlayerId, username: String, password: String): Playe
         playerId = playerId,
         username = username,
         hashedPassword = hash(password),
-        profile = createProfile(playerId, username)
+        profile = createProfile(playerId)
     )
 }
 
-fun createProfile(playerId: PlayerId, username: String): Profile {
-    val now = TimeCenter.system.now()
+fun createProfile(playerId: PlayerId, username: String = "xyz"): Profile {
+    val now = TimeCenter.now()
     return Profile(
         playerId = playerId,
         createdAt = now,

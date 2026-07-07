@@ -27,6 +27,7 @@ class DefaultConnection(
     override val connectionScope: CoroutineScope
 ) : Connection {
     override val identity: ConnectionIdentity = ConnectionIdentity(remoteAddress = remoteAddress)
+    private val storage = mutableMapOf<String, Any>()
 
     /**
      * Suspends until data becomes available on the input channel,
@@ -66,17 +67,46 @@ class DefaultConnection(
             if (logOutput) {
                 onSend(this)
             }
-        } catch (_: ClosedWriteChannelException) {
-            Fancam.info(Tags.Socket) { "Aborting write because connection is closed for $this" }
         } catch (e: Exception) {
             Fancam.error(e, Tags.Socket) { "Failed to write to $this" }
             throw e
         }
     }
 
-    override fun acknowledge(playerId: PlayerId, username: String) {
+    /**
+     * Player is identified when their playerId is not null.
+     */
+    override fun isIdentified(): Boolean {
+        return identity.playerId != null
+    }
+
+    override fun updateIdentity(playerId: PlayerId, username: String) {
         identity.playerId = playerId
         identity.username = username
+    }
+
+    override fun updatePlayerId(playerId: PlayerId) {
+        identity.playerId = playerId
+    }
+
+    override fun updateUsername(username: String) {
+        identity.username = username
+    }
+
+    override fun get(key: String): Any? {
+        return storage[key]
+    }
+
+    override fun put(key: String, value: Any) {
+        storage[key] = value
+    }
+
+    override fun delete(key: String) {
+        storage.remove(key)
+    }
+
+    override fun clearStorage() {
+        storage.clear()
     }
 
     /**
@@ -87,9 +117,13 @@ class DefaultConnection(
      */
     override suspend fun shutdown() {
         try {
+            clearStorage()
             connectionScope.cancel(CancellationException("Connection closed"))
             connectionScope.coroutineContext.job.join()
+        } catch (_: ClosedWriteChannelException) {
+            // connection is closed during write
         } catch (_: CancellationException) {
+            // connection is closed
         } catch (e: Exception) {
             Fancam.warn(Tags.Socket) { "Scandal during connection shutdown: ${e.message}" }
         }

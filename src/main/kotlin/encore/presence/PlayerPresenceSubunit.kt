@@ -3,6 +3,7 @@ package encore.presence
 import encore.datastore.collection.PlayerId
 import encore.fancam.Fancam
 import encore.fancam.Tags
+import encore.network.transport.UndeterminedIdentity
 import encore.subunit.Subunit
 import encore.subunit.scope.ServerScope
 import encore.time.TimeCenter
@@ -21,10 +22,18 @@ class PlayerPresenceSubunit : Subunit<ServerScope> {
     private val onlinePlayers = ConcurrentHashMap<String, PlayerPresence>()
 
     /**
-     * Mark the [playerId] as online. Does nothing if the player is already online.
+     * Mark the [playerId] as online.
+     *
+     * Does nothing if:
+     * - the player is already online
+     * - `playerId` is equal to [UndeterminedIdentity]
      */
     fun markOnline(playerId: PlayerId) {
-        val now = TimeCenter.system.now()
+        if (playerId == UndeterminedIdentity) {
+            Fancam.warn { "markOnline: Undetermined identity won't be marked online" }
+            return
+        }
+        val now = TimeCenter.now()
         onlinePlayers[playerId] = PlayerPresence(
             playerId = playerId,
             onlineSince = now,
@@ -58,8 +67,8 @@ class PlayerPresenceSubunit : Subunit<ServerScope> {
     /**
      * Update the last network activity of [playerId]. Does nothing if the player is not online.
      */
-    fun updateLastLogin(playerId: PlayerId) {
-        onlinePlayers[playerId]?.lastNetworkActivity = TimeCenter.system.now()
+    fun updateLastActivity(playerId: PlayerId) {
+        onlinePlayers[playerId]?.lastNetworkActivity = TimeCenter.now()
     }
 
     override suspend fun debut(scope: ServerScope): Result<Unit> = Result.success(Unit)

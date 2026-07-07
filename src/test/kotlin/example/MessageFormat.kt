@@ -1,10 +1,8 @@
 package example
 
-import com.mongodb.assertions.Assertions.assertFalse
 import encore.network.fanchant.guide.DecodeResult
 import encore.network.fanchant.guide.FanchantGuide
 import encore.network.fanchant.Fanchant
-import encore.network.fanchant.FanchantType
 import kotlin.test.*
 
 /**
@@ -172,10 +170,6 @@ object SpaceSeparatedStringSerializer {
  * Example [Fanchant] implementation based on [SpaceSeparatedStringFanchantGuide].
  */
 class SpaceSeparatedFanchant(private val payload: List<String>): Fanchant {
-    override val type: FanchantType<*> = SpaceSeparatedFanchantType(payload.first())
+    override val type: String = payload.first()
     override fun toString(): String = payload.joinToString()
-}
-
-class SpaceSeparatedFanchantType(type: String): FanchantType<SpaceSeparatedFanchant> {
-    override val id: String = type
 }

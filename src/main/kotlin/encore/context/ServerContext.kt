@@ -12,11 +12,14 @@ import encore.backstage.command.CommandDispatcher
 import encore.datastore.BlankDataStore
 import encore.datastore.DataStore
 import encore.datastore.collection.PlayerId
+import encore.fancam.Fancam
+import encore.network.lifecycle.PlayerLifecycleHandler
 import encore.session.SessionSubunit
 import encore.subunit.Subunit
 import encore.subunit.scope.ServerScope
-import encore.time.SystemTimekeeper
-import encore.time.Timekeeper
+import encore.time.source.SystemTimeSource
+import encore.time.source.TimeSource
+import encore.utils.support.className
 import encore.websocket.WebSocketManager
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.EmptyCoroutineContext
@@ -30,6 +33,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * @property dataStore [DataStore] instance of the server.
  * @property contextRegistry Tracks and manages [PlayerContext].
  * @property commandDispatcher Tracks and executes server commands.
+ * @property playerLifecycleHandler Dispatches hook for player's connection activity.
  * @property stageActDirector Provide API to start and stop stage acts.
  * @property webSocketManager Manages client websocket connections.
  * @property subunits Container for server subunit instances.
@@ -38,6 +42,7 @@ data class ServerContext(
     val dataStore: DataStore,
     val contextRegistry: ContextRegistry,
     val commandDispatcher: CommandDispatcher,
+    val playerLifecycleHandler: PlayerLifecycleHandler,
     val stageActDirector: StageActDirector,
     val webSocketManager: WebSocketManager,
     val subunits: ServerSubunits
@@ -47,7 +52,7 @@ data class ServerContext(
          * Creates a test instance of [ServerContext].
          *
          * @param parentScope `CoroutineScope` for [SessionSubunit].
-         * @param timekeeper [Timekeeper] for [StageActDirector].
+         * @param timeSource [TimeSource] for [StageActDirector].
          * @param dataStore Also used to build [PlayerCreationSubunit].
          * @param accountRepository Used to build [AccountSubunit].
          * @param contextFactory Required by [ContextRegistry],
@@ -55,8 +60,9 @@ data class ServerContext(
          */
         fun createForTest(
             parentScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
-            timekeeper: Timekeeper = SystemTimekeeper,
+            timeSource: TimeSource = SystemTimeSource(),
             dataStore: DataStore = BlankDataStore(),
+            playerLifecycleHandler: PlayerLifecycleHandler = PlayerLifecycleHandler(true),
             accountRepository: AccountRepository = BlankAccountRepository(),
             contextFactory: ContextFactory = FakeContextFactory(emptyMap())
         ): ServerContext {
@@ -68,7 +74,8 @@ data class ServerContext(
                 dataStore = dataStore,
                 contextRegistry = ContextRegistry(contextFactory),
                 commandDispatcher = CommandDispatcher(),
-                stageActDirector = StageActDirector(timekeeper, ActIdStore),
+                playerLifecycleHandler = playerLifecycleHandler,
+                stageActDirector = StageActDirector(timeSource, ActIdStore),
                 webSocketManager = WebSocketManager(),
                 subunits = ServerSubunits(
                     account = account,
@@ -126,5 +133,29 @@ data class ServerSubunits(
      */
     fun all(): Set<Subunit<ServerScope>> {
         return setOf(account, auth, creation, presence, session)
+    }
+
+    /**
+     * Debut every server subunit instances with [scope].
+     */
+    suspend fun debut(scope: ServerScope) {
+        all().forEach { subunit ->
+            val result = subunit.debut(scope)
+            if (result.isFailure) {
+                Fancam.error(result.exceptionOrNull()) { "Result.failure on ServerSubunit debut '${subunit.className()}'" }
+            }
+        }
+    }
+
+    /**
+     * Disband every server subunit instances with [scope].
+     */
+    suspend fun disband(scope: ServerScope) {
+        all().forEach { subunit ->
+            val result = subunit.disband(scope)
+            if (result.isFailure) {
+                Fancam.error(result.exceptionOrNull()) { "Result.failure on ServerSubunit disband '${subunit.className()}'" }
+            }
+        }
     }
 }

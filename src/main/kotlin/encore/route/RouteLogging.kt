@@ -3,7 +3,7 @@ package encore.route
 import encore.fancam.Fancam
 import encore.fancam.INDENT
 import encore.fancam.Tags
-import encore.fancam.formatter.colorizeSegment
+import encore.fancam.formatter.colorizeSegmentFg
 import encore.time.TimeCenter
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -12,11 +12,12 @@ import io.ktor.server.plugins.origin
 import io.ktor.server.request.contentLength
 import io.ktor.server.request.contentType
 import io.ktor.server.request.httpMethod
+import io.ktor.server.request.receiveText
 import io.ktor.server.request.uri
 import io.ktor.server.response.ApplicationSendPipeline
 import io.ktor.util.AttributeKey
 
-fun ApplicationCall.stringifyHttpRequest(unhandled: Boolean): String {
+suspend fun ApplicationCall.stringifyHttpRequest(unhandled: Boolean): String {
     return buildString {
         if (unhandled) {
             appendLine("----- [Unhandled HTTP Request]")
@@ -36,7 +37,13 @@ fun ApplicationCall.stringifyHttpRequest(unhandled: Boolean): String {
         val length = request.contentLength() ?: "N/A"
         val host = request.origin.remoteHost.takeIf { it.isNotBlank() } ?: "N/A"
 
-        append("$INDENT type=$type, length=$length, remote=$host")
+        appendLine("$INDENT type=$type, length=$length, remote=$host")
+
+        val body = request.call.receiveText()
+
+        appendLine("$INDENT <=========body=========>")
+        appendLine("$INDENT $body")
+        append("$INDENT <=========end==========>")
     }
 }
 
@@ -44,7 +51,7 @@ fun Application.interceptResponse() {
     sendPipeline.intercept(ApplicationSendPipeline.After) {
         val call = context.request.call
         val startedAt = call.attributes.getOrNull(ReqResLoggingKey) ?: return@intercept
-        val elapsed = TimeCenter.system.elapsedTimeSince(startedAt)
+        val elapsed = TimeCenter.elapsedTimeSince(startedAt)
 
         Fancam.debug(Tags.Api) { call.stringifyHttpResponse(subject, elapsed) }
     }
@@ -87,38 +94,38 @@ fun Any?.toLogBody(): String {
 
 fun colorizeHttpMethod(method: String): String {
     return when (method.lowercase()) {
-        "get" -> colorizeSegment(28, method)
-        "post" -> colorizeSegment(68, method)
-        "put" -> colorizeSegment(140, method)
-        "delete" -> colorizeSegment(161, method)
-        else -> colorizeSegment(5, method)
+        "get" -> colorizeSegmentFg(28, method)
+        "post" -> colorizeSegmentFg(68, method)
+        "put" -> colorizeSegmentFg(140, method)
+        "delete" -> colorizeSegmentFg(161, method)
+        else -> colorizeSegmentFg(5, method)
     }
 }
 
 fun colorizeStatusCode(status: Int): String {
     return when (status) {
         in 100..199 -> {
-            colorizeSegment(249, status.toString())
+            colorizeSegmentFg(249, status.toString())
         }
 
         in 200..299 -> {
-            colorizeSegment(28, status.toString())
+            colorizeSegmentFg(28, status.toString())
         }
 
         in 300..399 -> {
-            colorizeSegment(110, status.toString())
+            colorizeSegmentFg(110, status.toString())
         }
 
         in 400..499 -> {
-            colorizeSegment(124, status.toString())
+            colorizeSegmentFg(124, status.toString())
         }
 
         in 500..599 -> {
-            colorizeSegment(124, status.toString())
+            colorizeSegmentFg(124, status.toString())
         }
 
         else -> {
-            colorizeSegment(249, "no-status")
+            colorizeSegmentFg(249, "no-status")
         }
     }
 }

@@ -4,9 +4,10 @@ import encore.acts.choreo.Choreography
 import encore.acts.choreo.ChoreographyContext
 import encore.fancam.Fancam
 import encore.fancam.Tags
-import encore.time.TimeCenter
-import encore.time.Timekeeper
+import encore.fancam.events.Level
 import encore.time.source.SystemTimeSource
+import encore.time.source.TimeSource
+import encore.utils.Emoji
 import encore.utils.identifier.Ids
 import encore.utils.identifier.shortUuid
 import encore.utils.support.className
@@ -109,12 +110,11 @@ import kotlin.time.Duration.Companion.milliseconds
  * - delete persisted progress data
  * - notify client
  *
- * @property timekeeper Component that provides time.
- *                      Use [Timekeeper] with [SystemTimeSource] for real usage.
+ * @property timeSource Component that provides time. Use [SystemTimeSource] for real usage.
  * @property actStore Provides storage and access for running act identifiers.
  */
 class StageActDirector(
-    private val timekeeper: Timekeeper,
+    private val timeSource: TimeSource,
     private val actStore: ActIdStore
 ) {
     private val activeActs = mutableMapOf<String, Job>()
@@ -173,7 +173,7 @@ class StageActDirector(
         callOnStart: Boolean,
         performDirectly: Boolean
     ): String {
-        val startedAt = timekeeper.now()
+        val startedAt = timeSource.now()
         val id = Ids.uuid()
         val choreo = act.choreography(concept)
 
@@ -195,7 +195,7 @@ class StageActDirector(
                         }
                     }
 
-                    val now = timekeeper.now()
+                    val now = timeSource.now()
                     firstPerformAt = now
                     previousPerformAt = now
                     act.perform(concept, 1)
@@ -203,7 +203,7 @@ class StageActDirector(
                 }
 
                 while (true) {
-                    val now = timekeeper.now()
+                    val now = timeSource.now()
                     val delay = choreo.next(
                         concept = concept,
                         context = ChoreographyContext(
@@ -224,8 +224,10 @@ class StageActDirector(
                         }
                     }
 
+                    ggeretsae(delay)
+
                     if (delay > 0) delay(delay.milliseconds)
-                    if (firstPerformAt == null) firstPerformAt = timekeeper.now()
+                    if (firstPerformAt == null) firstPerformAt = timeSource.now()
 
                     act.perform(concept, ++performCount)
                 }
@@ -257,7 +259,7 @@ class StageActDirector(
     val formatter = SimpleDateFormat("HH:mm:ss")
 
     fun formatFinishTime(delay: Long): String {
-        val future = (TimeCenter.system.now() + delay)
+        val future = (timeSource.now() + delay)
         val formattedDuration = delay.milliseconds.toComponents { days, hours, minutes, seconds, _ ->
             String.format("%01dd %01dhr %01dm %01ds", days, hours, minutes, seconds)
         }
@@ -295,5 +297,40 @@ class StageActDirector(
      */
     fun shutdown() {
         activeActs.forEach { (actId, _) -> stop(actId) }
+    }
+
+    private fun ggeretsae(delay: Long) {
+        when (delay.milliseconds.inWholeSeconds) {
+            in between(178) -> {
+                Fancam.event(Level.Off, "kp")
+                    .message { "(02:58) ${Emoji.Bubble} Pop that body like bubble gum" }
+                    .log()
+            }
+
+            in between(188) -> {
+                Fancam.event(Level.Off, "kp")
+                    .message { "(03:08) ${Emoji.Stars} Fly high like shooting stars..." }
+                    .log()
+            }
+
+            in between(196) -> {
+                Fancam.event(Level.Off, "kp")
+                    .message { "(03:16) ${Emoji.Knife} You know I'm a KILLA" }
+                    .log()
+            }
+
+            in between(198) -> {
+                Fancam.event(Level.Off, "kp")
+                    .message { "(03:18) ${Emoji.Run} Kep1 going, 와다다다" }
+                    .log()
+            }
+
+
+            else -> {} // nothing
+        }
+    }
+
+    private fun between(n: Int): IntRange {
+        return n - 1..n + 1
     }
 }

@@ -1,6 +1,5 @@
 package encoreTest.backstage
 
-import com.mongodb.assertions.Assertions.assertTrue
 import encore.backstage.command.types.ArgumentCollection
 import encore.backstage.command.types.ArgumentDescriptor
 import encore.backstage.command.Command
@@ -65,7 +64,7 @@ class CommandDispatcherTest {
 
         // ensure warned
         assertTrue {
-            TestFancam.get().assertLogHas(Level.Warn, 1) { it.contains("has been registered before") }
+            TestFancam.get().assertLogHas(Level.Warn, 1) { it.message().contains("has been registered before") }
         }
         // ensure the first registered command get overwritten
         assertTrue(dispatcher.getAllVariantsOf("cmd2").contains(cmd2b))

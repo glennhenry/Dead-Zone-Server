@@ -15,6 +15,7 @@ import encore.context.ServerContext
 import encore.context.ServerSubunits
 import encore.datastore.MongoCollectionName
 import encore.datastore.MongoDataStore
+import encore.network.lifecycle.PlayerLifecycleHandler
 import encore.presence.PlayerPresenceSubunit
 import encore.session.SessionSubunit
 import encore.subunit.scope.ServerScope
@@ -38,23 +39,26 @@ suspend fun createServerContext(
     val dataStore = MongoDataStore(
         db = mongoClient.getDatabase(Venue.encore.database.dbName),
         collectionName = MongoCollectionName
-    )
+    ).also { it.awaitInit() }
     val accountRepository = MongoAccountRepository(
         accountCollection = mongoDatabase.getCollection(MongoCollectionName.playerAccount)
     )
     // RealContextFactory must be updated overtime to update PlayerSubunits construction
-    val contextRegistry = ContextRegistry(factory = RealContextFactory(dataStore, collectionName, mongoDatabase))
+    val contextRegistry = ContextRegistry(
+        factory = RealContextFactory(dataStore, collectionName, mongoDatabase)
+    )
     val stageActDirector = StageActDirector(
-        timekeeper = TimeCenter.system,
+        timeSource = TimeCenter.source,
         actStore = ActIdStore
     )
     val commandDispatcher = CommandDispatcher()
+    val playerLifecycleHandler = PlayerLifecycleHandler(logEachHook = true)
     val webSocketManager = WebSocketManager()
 
     // setup ServerSubunits
     val accountSubunit = AccountSubunit(accountRepository)
     val playerPresenceSubunit = PlayerPresenceSubunit()
-    val sessionSubunit = SessionSubunit(appScope, TimeCenter.system)
+    val sessionSubunit = SessionSubunit(appScope, TimeCenter.source)
     val playerCreationSubunit = PlayerCreationSubunit(dataStore)
     val authSubunit = AuthSubunit(accountSubunit, playerCreationSubunit, sessionSubunit)
 
@@ -67,13 +71,14 @@ suspend fun createServerContext(
     )
 
     // debut all subunits
-    subunits.all().forEach { it.debut(serverSubunitScope) }
+    subunits.debut(ServerScope)
 
     val serverContext = ServerContext(
         dataStore = dataStore,
         contextRegistry = contextRegistry,
         stageActDirector = stageActDirector,
         commandDispatcher = commandDispatcher,
+        playerLifecycleHandler = playerLifecycleHandler,
         webSocketManager = webSocketManager,
         subunits = subunits
     )

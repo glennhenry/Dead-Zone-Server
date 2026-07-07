@@ -1,8 +1,8 @@
 package encore.account.model
 
 import encore.datastore.collection.PlayerId
-import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
+import encore.time.TimeCenter
 
 /**
  * Player profile information.
@@ -20,8 +20,8 @@ data class Profile(
     val email: String = "",
     val displayName: String = "",
     val avatarUrl: String = "",
-    val createdAt: Long = getTimeMillis(),
-    val lastLogin: Long = getTimeMillis(),
+    val createdAt: Long = TimeCenter.now(),
+    val lastLogin: Long = TimeCenter.now(),
     val countryCode: String? = null,
     val friends: Set<Profile> = emptySet(),
     val enemies: Set<Profile> = emptySet(),

@@ -7,12 +7,12 @@ import encore.network.transport.TestConnection
 import encore.network.handler.HandlerContext
 import encore.network.handler.FanchantHandler
 import encore.network.fanchant.Fanchant
-import encore.network.fanchant.FanchantType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import testUtils.HandlerTestState
 import testUtils.createAccount
+import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -93,8 +93,9 @@ class ExampleHandlerTest {
 /**
  * Example of handler that handles [DotSeparatedFanchant]
  */
-class DotSeparatedHandler: FanchantHandler<DotSeparatedFanchant> {
-    override val fanchantType: FanchantType<DotSeparatedFanchant> = DotSeparatedFanchantType
+class DotSeparatedHandler : FanchantHandler<DotSeparatedFanchant> {
+    override val fanchantType: String = "EX"
+    override val expectedFanchantClass: KClass<DotSeparatedFanchant> = DotSeparatedFanchant::class
 
     /**
      * `with(ctx)` gives developer QoL to access `connection` and `message` simpler.
@@ -102,7 +103,7 @@ class DotSeparatedHandler: FanchantHandler<DotSeparatedFanchant> {
     override suspend fun handle(ctx: HandlerContext<DotSeparatedFanchant>) = with(ctx) {
         if (fanchant.payload.contains("|")) {
             val messageToSend = "RESPONSE.EX.FAIL"
-            sendRaw(messageToSend.toByteArray())
+            ctx.connection.write(messageToSend.toByteArray())
         } else {
             val cleanPayload = fanchant.payload.substringAfter("MSG1.EX.").split(".")
             val result = StringBuilder()
@@ -112,7 +113,7 @@ class DotSeparatedHandler: FanchantHandler<DotSeparatedFanchant> {
             }
 
             val messageToSend = "RESPONSE.EX.$result"
-            sendRaw(messageToSend.toByteArray())
+            ctx.connection.write(messageToSend.toByteArray())
         }
     }
 }
@@ -128,10 +129,6 @@ class DotSeparatedHandler: FanchantHandler<DotSeparatedFanchant> {
  * - The rest are payload.
  */
 class DotSeparatedFanchant(val payload: String) : Fanchant {
-    override val type: FanchantType<*> = DotSeparatedFanchantType
+    override val type: String = "EX"
     override fun toString(): String = payload
-}
-
-object DotSeparatedFanchantType: FanchantType<DotSeparatedFanchant> {
-    override val id: String = "EX"
 }

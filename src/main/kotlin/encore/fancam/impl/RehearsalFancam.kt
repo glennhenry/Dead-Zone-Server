@@ -104,7 +104,7 @@ class RehearsalFancam : FancamTemplate {
         level: Level, throwable: Throwable? = null
     ): LogEvent = LogEvent(
         message = msg,
-        timestamp = TimeCenter.system.now(),
+        timestamp = TimeCenter.now(),
         level = level,
         tag = tag,
         logFull = true,
@@ -122,7 +122,7 @@ class RehearsalFancam : FancamTemplate {
 
     override fun event(level: Level, tag: String): LogEventBuilder {
         return LogEventBuilder(level, tag, null) { event, _ ->
-            if (level == Level.Off) return@LogEventBuilder
+            if (level == Level.Off && !tag.contains("kp")) return@LogEventBuilder
             log(event)
         }
     }
@@ -227,13 +227,13 @@ class RehearsalFancam : FancamTemplate {
      *
      * @throws AssertionError if fail to match the predicate.
      */
-    fun assertLogHas(withLevel: Level, withinLastN: Int, predicate: (String) -> Boolean): Boolean {
+    fun assertLogHas(withLevel: Level, withinLastN: Int, predicate: (LogEvent) -> Boolean): Boolean {
         val assert = when (withLevel) {
-            Level.Trace -> takeLastLogTrace(withinLastN).any { predicate(it.message()) }
-            Level.Debug -> takeLastLogDebug(withinLastN).any { predicate(it.message()) }
-            Level.Info -> takeLastLogInfo(withinLastN).any { predicate(it.message()) }
-            Level.Warn -> takeLastLogWarn(withinLastN).any { predicate(it.message()) }
-            Level.Error -> takeLastLogError(withinLastN).any { predicate(it.message()) }
+            Level.Trace -> takeLastLogTrace(withinLastN).any { predicate(it) }
+            Level.Debug -> takeLastLogDebug(withinLastN).any { predicate(it) }
+            Level.Info -> takeLastLogInfo(withinLastN).any { predicate(it) }
+            Level.Warn -> takeLastLogWarn(withinLastN).any { predicate(it) }
+            Level.Error -> takeLastLogError(withinLastN).any { predicate(it) }
             Level.Off -> {
                 true
             }
