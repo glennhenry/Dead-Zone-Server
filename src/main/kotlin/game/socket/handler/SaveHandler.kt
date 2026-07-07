@@ -2,7 +2,6 @@ package game.socket.handler
 
 import encore.context.ServerContext
 import encore.fancam.Fancam
-import encore.network.fanchant.FanchantType
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.time.TimeCenter
@@ -23,7 +22,7 @@ import game.socket.handler.save.raid.RaidSaveHandler
 import game.socket.handler.save.survivor.SurvivorSaveHandler
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PioFanchant
-import game.socket.protocol.PioFanchantType
+import kotlin.reflect.KClass
 
 /**
  * Handle `save` message by:
@@ -34,7 +33,9 @@ import game.socket.protocol.PioFanchantType
  * 4. Optionally, response back a message of type 'r' with the expected JSON payload and the given save id.
  */
 class SaveHandler(private val serverContext: ServerContext) : FanchantHandler<PioFanchant> {
-    override val fanchantType: FanchantType<PioFanchant> = PioFanchantType(NetworkMessage.SAVE)
+    override val fanchantType: String = NetworkMessage.SAVE
+    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
+
     private val saveHandlers = listOf(
         ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(),
         CommandSaveHandler(), BuildingSaveHandler(), CmpMiscSaveHandler(),
@@ -77,7 +78,7 @@ fun buildMsg(saveId: String?, vararg payloads: Any): List<Any> {
     return buildList {
         add("r")
         add(saveId ?: "m")
-        add(TimeCenter.game.nowInDouble())
+        add(TimeCenter.now().toDouble())
         addAll(payloads)
     }
 }

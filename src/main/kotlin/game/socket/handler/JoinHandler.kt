@@ -2,7 +2,6 @@ package game.socket.handler
 
 import encore.context.ServerContext
 import encore.fancam.Fancam
-import encore.network.fanchant.FanchantType
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.time.TimeCenter
@@ -11,12 +10,12 @@ import game.domain.login.LoginStateBuilder
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PIOSerializer
 import game.socket.protocol.PioFanchant
-import game.socket.protocol.PioFanchantType
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.GZIPOutputStream
+import kotlin.reflect.KClass
 
 /**
  * Handle `join` message by:
@@ -25,7 +24,8 @@ import java.util.zip.GZIPOutputStream
  * 2. Sending `gr` message
  */
 class JoinHandler(private val serverContext: ServerContext) : FanchantHandler<PioFanchant> {
-    override val fanchantType: FanchantType<PioFanchant> = PioFanchantType(NetworkMessage.JOIN)
+    override val fanchantType: String = NetworkMessage.JOIN
+    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
     override suspend fun handle(ctx: HandlerContext<PioFanchant>): Unit = with(ctx) {
         val joinKey = fanchant.getString(NetworkMessage.JOIN)
@@ -35,7 +35,7 @@ class JoinHandler(private val serverContext: ServerContext) : FanchantHandler<Pi
             ?: throw IllegalArgumentException("No userId for connection: $connection")
 
         val displayName = serverContext.subunits.account.getProfile(userId).okOrNull()?.displayName ?: "noname"
-        connection.acknowledge(userId, displayName)
+        ctx.connection.updateIdentity(userId, displayName)
 
         // First message: join result
         val joinResultMsg = listOf(NetworkMessage.JOIN_RESULT, true)
@@ -50,7 +50,7 @@ class JoinHandler(private val serverContext: ServerContext) : FanchantHandler<Pi
         // Second message: game ready message
         val gameReadyMsg = listOf(
             NetworkMessage.GAME_READY,
-            TimeCenter.game.nowInDouble(),
+            TimeCenter.now().toDouble(),
             produceBinaries(),
             loadRawFile("assets/data/cost_table.json"),
             loadRawFile("assets/data/srv_table.json"),

@@ -1,7 +1,6 @@
 package game.socket.protocol
 
 import encore.network.fanchant.Fanchant
-import encore.network.fanchant.FanchantType
 import encore.serialization.JSON
 import encore.serialization.parseJsonToMap
 
@@ -17,7 +16,7 @@ class PioFanchant(
     messageType: String,
     private val raw: List<Any>
 ) : Fanchant {
-    override val type: FanchantType<*> = PioFanchantType(messageType)
+    override val type: String = messageType
 
     private val data: Map<String, Any?> = buildMap {
         val end = raw.size
@@ -80,5 +79,3 @@ class PioFanchant(
         }
     }
 }
-
-data class PioFanchantType(override val id: String) : FanchantType<PioFanchant>

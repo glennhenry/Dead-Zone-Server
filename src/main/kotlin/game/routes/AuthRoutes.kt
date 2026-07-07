@@ -79,6 +79,12 @@ class AuthRoutes(private val serverContext: ServerContext) : RouteHandler {
                     }
                 } else {
                     val result = serverContext.subunits.auth.register(username, password).okOrThrow()
+
+                    if (result == null) {
+                        call.respond(HttpStatusCode.Found, mapOf("reason" to "username already exists"))
+                        return@handle
+                    }
+
                     call.respond(
                         HttpStatusCode.OK,
                         mapOf("playerId" to result.userId, "token" to result.token)

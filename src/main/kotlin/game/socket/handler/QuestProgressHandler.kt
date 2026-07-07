@@ -1,12 +1,11 @@
 package game.socket.handler
 
-import encore.network.fanchant.FanchantType
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PIOSerializer
 import game.socket.protocol.PioFanchant
-import game.socket.protocol.PioFanchantType
+import kotlin.reflect.KClass
 
 /**
  * Handle `qp` message by:
@@ -15,7 +14,8 @@ import game.socket.protocol.PioFanchantType
  *
  */
 class QuestProgressHandler : FanchantHandler<PioFanchant> {
-    override val fanchantType: FanchantType<PioFanchant> = PioFanchantType(NetworkMessage.QUEST_PROGRESS)
+    override val fanchantType: String = NetworkMessage.QUEST_PROGRESS
+    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
     override suspend fun handle(ctx: HandlerContext<PioFanchant>): Unit = with(ctx) {
         val message = listOf(NetworkMessage.QUEST_PROGRESS, questProgressJson.trimIndent())

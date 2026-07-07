@@ -28,7 +28,6 @@ class DebugLogRoutes(private val wsManager: WebSocketManager) : RouteHandler {
                 }
             }
         }
-
         webSocket("/debuglog") {
             handle(call, NoAuthGuard) {
                 val clientId = call.parameters["clientId"]

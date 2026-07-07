@@ -1,14 +1,13 @@
 package game.socket.handler
 
 import encore.fancam.Fancam
-import encore.network.fanchant.FanchantType
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.time.TimeCenter
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PIOSerializer
 import game.socket.protocol.PioFanchant
-import game.socket.protocol.PioFanchantType
+import kotlin.reflect.KClass
 
 /**
  * Handle `rsc` message by:
@@ -17,7 +16,8 @@ import game.socket.protocol.PioFanchantType
  *
  */
 class RequestSurvivorCheckHandler : FanchantHandler<PioFanchant> {
-    override val fanchantType: FanchantType<PioFanchant> = PioFanchantType(NetworkMessage.REQUEST_SURVIVOR_CHECK)
+    override val fanchantType: String = NetworkMessage.REQUEST_SURVIVOR_CHECK
+    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
     override suspend fun handle(ctx: HandlerContext<PioFanchant>): Unit = with(ctx) {
         val id = fanchant.getMap("rsc")?.get("id") as? String
@@ -27,7 +27,7 @@ class RequestSurvivorCheckHandler : FanchantHandler<PioFanchant> {
             listOf(
                 NetworkMessage.SEND_RESPONSE,  // Message Type
                 id ?: "m",   // id
-                TimeCenter.game.nowInDouble(),   // server time
+                TimeCenter.now().toDouble(),   // server time
                 survivorCheckJson.trimIndent() // response
             )
         
