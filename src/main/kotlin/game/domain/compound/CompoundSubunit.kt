@@ -4,6 +4,11 @@ import encore.datastore.collection.PlayerId
 import encore.fancam.Fancam
 import encore.subunit.Subunit
 import encore.subunit.scope.PlayerScope
+import encore.time.TimeCenter
+import encore.utils.types.Outcome
+import encore.utils.types.Report
+import encore.utils.types.onFail
+import encore.utils.types.toReport
 import game.domain.compound.model.BuildingLike
 import game.domain.compound.model.GameResources
 import game.domain.compound.model.copy
@@ -23,17 +28,6 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
     fun getResources() = resources
     fun getBuildings() = buildings
 
-    suspend fun updateResources(updateAction: suspend (GameResources) -> GameResources) {
-        val update = updateAction(resources)
-        val result = compoundRepository.updateGameResources(playerId, update)
-        result.onFailure {
-            Fancam.error(tag = "compound") { "Error on updateResources" }
-        }
-        result.onSuccess {
-            this.resources = update
-        }
-    }
-
     fun getBuildingById(bldId: String): BuildingLike {
         return buildings[getIndexOfBuilding(bldId)]
     }
@@ -47,56 +41,60 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
     suspend fun updateBuilding(
         bldId: String,
         updateAction: suspend (BuildingLike) -> BuildingLike
-    ) {
+    ): Report {
         val idx = getIndexOfBuilding(bldId)
         val update = updateAction(buildings[idx])
-        val result = compoundRepository.updateBuilding(playerId, bldId, update)
-        result.onFailure {
-            Fancam.error(tag = "compound") { "Error on updateBuilding" }
-        }
-        result.onSuccess {
-            buildings[idx] = update
-        }
+        return compoundRepository.updateBuilding(playerId, bldId, update)
+            .onFailure {
+                Fancam.error(tag = "compound") { "Error on updateBuilding" }
+            }
+            .onSuccess {
+                buildings[idx] = update
+            }
+            .toReport()
     }
 
-    suspend fun createBuilding(createAction: suspend () -> (BuildingLike)) {
+    suspend fun createBuilding(createAction: suspend () -> (BuildingLike)): Report {
         val create = createAction()
-        val result = compoundRepository.createBuilding(playerId, create)
-        result.onFailure {
-            Fancam.error(tag = "compound") { "Error on createBuilding" }
-        }
-        result.onSuccess {
-            this.buildings.add(create)
-        }
+        return compoundRepository.createBuilding(playerId, create)
+            .onFailure {
+                Fancam.error(tag = "compound") { "Error on createBuilding" }
+            }
+            .onSuccess {
+                this.buildings.add(create)
+            }
+            .toReport()
     }
 
-    suspend fun deleteBuilding(bldId: String) {
-        val result = compoundRepository.deleteBuilding(playerId, bldId)
-        result.onFailure {
-            Fancam.error(tag = "compound") { "Error on deleteBuilding" }
-        }
-        result.onSuccess {
-            this.buildings.removeIf { it.id == bldId }
-        }
+    suspend fun deleteBuilding(bldId: String): Report {
+        return compoundRepository.deleteBuilding(playerId, bldId)
+            .onFailure {
+                Fancam.error(tag = "compound") { "Error on deleteBuilding" }
+            }
+            .onSuccess {
+                this.buildings.removeIf { it.id == bldId }
+            }
+            .toReport()
     }
 
     // probably means canceling build, hence deleting the ongoing createBuiding
-    suspend fun cancelBuilding(bldId: String) {
-        val result = compoundRepository.deleteBuilding(playerId, bldId)
-        result.onFailure {
-            Fancam.error(tag = "compound") { "Error on cancelBuilding" }
-        }
-        result.onSuccess {
-            buildings.removeIf { it.id == bldId }
-        }
+    suspend fun cancelBuilding(bldId: String): Report {
+        return compoundRepository.deleteBuilding(playerId, bldId)
+            .onFailure {
+                Fancam.error(tag = "compound") { "Error on cancelBuilding" }
+            }
+            .onSuccess {
+                buildings.removeIf { it.id == bldId }
+            }
+            .toReport()
     }
 
-    suspend fun collectBuilding(bldId: String): GameResources {
+    suspend fun collectBuilding(bldId: String): Outcome<GameResources> {
         val lastUpdate = lastResourceValueUpdated[bldId]
             ?: throw NoSuchElementException("Building bldId=$bldId is not categorized as production buildings")
 
         val collectedAmount = calculateResource(lastUpdate.seconds)
-        lastResourceValueUpdated[bldId] = getTimeMillis()
+        lastResourceValueUpdated[bldId] = TimeCenter.now()
 
         lateinit var prod: String
         // updateBuilding already do necessary result catch and update the in-memory buildings
@@ -104,7 +102,7 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
             // lookup to GameDefinitions, what does the building produce in 'prod' element
             prod = "wood"
             oldBld.copy(resourceValue = 0.0)
-        }
+        }.onFail { return Outcome.Fail }
 
         val res = when (prod) {
             "wood" -> GameResources(wood = collectedAmount.toInt())
@@ -119,13 +117,25 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
             }
         }
 
-        return res
+        return Outcome.Ok(res)
     }
 
-    suspend fun recycleBuilding(bldId: String): List<game.domain.items.model.Item> {
+    suspend fun recycleBuilding(bldId: String): List<Item> {
         deleteBuilding(bldId)
         // lookup to building xml what should be obtained
         return emptyList()
+    }
+
+    suspend fun updateResources(updateAction: suspend (GameResources) -> GameResources): Report {
+        val update = updateAction(resources)
+        return compoundRepository.updateGameResources(playerId, update)
+            .onFailure {
+                Fancam.error(tag = "compound") { "Error on updateResources" }
+            }
+            .onSuccess {
+                this.resources = update
+            }
+            .toReport()
     }
 
     fun calculateResource(durationSec: Duration): Double {
