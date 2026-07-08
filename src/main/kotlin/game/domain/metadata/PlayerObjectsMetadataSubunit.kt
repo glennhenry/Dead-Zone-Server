@@ -18,7 +18,7 @@ class PlayerObjectsMetadataSubunit(
     suspend fun updatePlayerFlags(flags: ByteArray): Report {
         return playerObjectsMetadataRepository.updatePlayerFlags(playerId, flags)
             .onFailure {
-                Fancam.error(tag = "metadata") { "Error updatePlayerFlags" }
+                Fancam.error(it, tag = "metadata") { "Error updatePlayerFlags" }
             }
             .onSuccess {
                 this.flags = flags
@@ -29,7 +29,7 @@ class PlayerObjectsMetadataSubunit(
     suspend fun updatePlayerNickname(nickname: String): Report {
         return playerObjectsMetadataRepository.updatePlayerNickname(playerId, nickname)
             .onFailure {
-                Fancam.error(tag = "metadata") { "Error updatePlayerNickname" }
+                Fancam.error(it, tag = "metadata") { "Error updatePlayerNickname" }
             }
             .onSuccess {
                 this.nickname = nickname

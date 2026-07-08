@@ -34,7 +34,7 @@ class SurvivorSubunit(
     suspend fun addNewSurvivor(survivor: Survivor): Report {
         return survivorRepository.addSurvivor(playerId, survivor)
             .onFailure {
-                Fancam.error(tag = "survivor") { "Error on addNewSurvivor" }
+                Fancam.error(it, tag = "survivor") { "Error on addNewSurvivor" }
             }
             .onSuccess {
                 survivors.add(survivor)
@@ -50,7 +50,7 @@ class SurvivorSubunit(
         val update = updateAction(survivors[idx])
         return survivorRepository.updateSurvivor(playerId, srvId, update)
             .onFailure {
-                Fancam.error(tag = "survivor") { "Error on updateSurvivor" }
+                Fancam.error(it, tag = "survivor") { "Error on updateSurvivor" }
             }
             .onSuccess {
                 survivors[idx] = update

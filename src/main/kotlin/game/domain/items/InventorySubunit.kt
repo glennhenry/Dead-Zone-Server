@@ -23,7 +23,7 @@ class InventorySubunit(
         val updatedInventory = updateAction(this.inventory)
         return inventoryRepository.updateInventory(playerId, updatedInventory)
             .onFailure {
-                Fancam.error(tag = "inventory") {
+                Fancam.error(it, tag = "inventory") {
                     "Failed to update inventory (from size=${this.inventory.size} to size=${updatedInventory.size})"
                 }
             }
@@ -39,7 +39,7 @@ class InventorySubunit(
         val updatedSchematics = updateAction(schematics)
         return inventoryRepository.updateSchematics(playerId, updatedSchematics)
             .onFailure {
-                Fancam.error(tag = "inventory") {
+                Fancam.error(it, tag = "inventory") {
                     "Failed to update schematics (from size=${this.schematics.size} to size=${updatedSchematics.size})"
                 }
             }

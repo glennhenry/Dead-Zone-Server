@@ -44,7 +44,7 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
         val update = updateAction(buildings[idx])
         return compoundRepository.updateBuilding(playerId, bldId, update)
             .onFailure {
-                Fancam.error(tag = "compound") { "Error on updateBuilding" }
+                Fancam.error(it, tag = "compound") { "Error on updateBuilding" }
             }
             .onSuccess {
                 buildings[idx] = update
@@ -56,7 +56,7 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
         val create = createAction()
         return compoundRepository.createBuilding(playerId, create)
             .onFailure {
-                Fancam.error(tag = "compound") { "Error on createBuilding" }
+                Fancam.error(it, tag = "compound") { "Error on createBuilding" }
             }
             .onSuccess {
                 this.buildings.add(create)
@@ -67,7 +67,7 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
     suspend fun deleteBuilding(bldId: String): Report {
         return compoundRepository.deleteBuilding(playerId, bldId)
             .onFailure {
-                Fancam.error(tag = "compound") { "Error on deleteBuilding" }
+                Fancam.error(it, tag = "compound") { "Error on deleteBuilding" }
             }
             .onSuccess {
                 this.buildings.removeIf { it.id == bldId }
@@ -79,7 +79,7 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
     suspend fun cancelBuilding(bldId: String): Report {
         return compoundRepository.deleteBuilding(playerId, bldId)
             .onFailure {
-                Fancam.error(tag = "compound") { "Error on cancelBuilding" }
+                Fancam.error(it, tag = "compound") { "Error on cancelBuilding" }
             }
             .onSuccess {
                 buildings.removeIf { it.id == bldId }
@@ -128,7 +128,7 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
         val update = updateAction(resources)
         return compoundRepository.updateGameResources(playerId, update)
             .onFailure {
-                Fancam.error(tag = "compound") { "Error on updateResources" }
+                Fancam.error(it, tag = "compound") { "Error on updateResources" }
             }
             .onSuccess {
                 this.resources = update
