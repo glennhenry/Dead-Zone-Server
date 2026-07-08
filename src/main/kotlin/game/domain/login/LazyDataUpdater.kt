@@ -1,9 +1,12 @@
 package game.domain.login
 
-import game.domain.compound.model.*
+import encore.time.TimeCenter
+import game.domain.compound.model.Building
+import game.domain.compound.model.BuildingLike
+import game.domain.compound.model.GameResources
 import game.domain.model.game.data.hasEnded
-import io.ktor.util.date.*
-import kotlin.math.min
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -11,41 +14,50 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 object LazyDataUpdater {
     fun depleteResources(lastLogin: Long, res: GameResources): GameResources {
-        val minutesPassed = min(0, (getTimeMillis() - lastLogin).milliseconds.inWholeMinutes)
-        val depletionRate = 0.02
-        // depletion formula: each minutes deplete res by 0.05, an hour is 3
+        val now = TimeCenter.now()
+        val minutesPassed = max(0, (now - lastLogin).milliseconds.inWholeMinutes)
+        val depletionRate = 0.01
+        // TO-DO depletion should be based on the number of survivors
+        // depletion formula right now: each minutes deplete res by 0.01, an hour is 0.6, ceil the result
 
-        val depleted = depletionRate * minutesPassed
-
+        val depleted = ceil(depletionRate * minutesPassed).toInt()
         return res.copy(
-            food = min(1, res.food - (depleted).toInt()),
-            water = min(1, res.water - (depleted).toInt())
+            food = max(0, res.food - depleted),
+            water = max(0, res.water - depleted)
         )
     }
 
     @Suppress("CAST_NEVER_SUCCEEDS")
-    fun updateBuildingTimers(buildings: List<BuildingLike>): List<BuildingLike> {
+    fun removeBuildingTimerIfDone(buildings: List<BuildingLike>): List<BuildingLike> {
         return buildings.map { bld ->
-            val upgradeDone = bld.upgrade?.hasEnded() ?: false
-            val repairDone = bld.repair?.hasEnded() ?: false
+            if (bld is Building) {
+                val upgradeWasGoing = bld.upgrade != null
+                val repairWasGoing = bld.repair != null
 
-            when (bld) {
-                is Building -> when {
-                    upgradeDone -> {
-                        val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
-                        bld.copy(level = level, upgrade = null)
+                if (upgradeWasGoing) {
+                    val upgradeDone = bld.upgrade.hasEnded()
+
+                    if (upgradeDone) {
+                        val level = (bld.upgrade.data?.get("level") as? Int ?: 1)
+                        return@map bld.copy(level = level, upgrade = null)
+                    } else {
+                        return@map bld
                     }
-                    repairDone -> bld.copy(repair = null)
-                    else -> bld
                 }
-                is JunkBuilding -> when {
-                    upgradeDone -> {
-                        val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
-                        bld.copy(level = level, upgrade = null)
+
+                if (repairWasGoing) {
+                    val repairDone = bld.repair.hasEnded()
+
+                    if (repairDone) {
+                        return@map bld.copy(repair = null, destroyed = false)
+                    } else {
+                        return@map bld
                     }
-                    repairDone -> bld.copy(repair = null)
-                    else -> bld
                 }
+
+                bld
+            } else {
+                return@map bld
             }
         }
     }
