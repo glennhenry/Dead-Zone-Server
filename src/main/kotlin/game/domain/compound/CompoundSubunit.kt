@@ -1,6 +1,7 @@
 package game.domain.compound
 
 import encore.datastore.collection.PlayerId
+import encore.definition.GameReference
 import encore.fancam.Fancam
 import encore.subunit.Subunit
 import encore.subunit.scope.PlayerScope
@@ -9,11 +10,8 @@ import encore.utils.types.Outcome
 import encore.utils.types.Report
 import encore.utils.types.onFail
 import encore.utils.types.toReport
-import game.domain.compound.model.BuildingLike
-import game.domain.compound.model.GameResources
-import game.domain.compound.model.copy
-import game.domain.compound.model.id
-import game.domain.compound.model.type
+import game.definition.ItemsDefinition
+import game.domain.compound.model.*
 import game.domain.items.model.Item
 import io.ktor.util.date.*
 import kotlin.time.Duration
@@ -145,10 +143,6 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
         return 10.0 + (productionRate * durationSec.inWholeMinutes)
     }
 
-    private fun isProductionBuilding(idInXML: String): Boolean {
-        return idInXML.contains("resource")
-    }
-
     override suspend fun debut(scope: PlayerScope): Result<Unit> {
         return runCatching {
             this.playerId = scope.playerId
@@ -160,7 +154,7 @@ class CompoundSubunit(private val compoundRepository: CompoundRepository) : Subu
             val now = getTimeMillis()
 
             for (bldLike in buildings) {
-                if (isProductionBuilding(bldLike.type)) {
+                if (GameReference.get<ItemsDefinition>().isResourceItem(bldLike.type)) {
                     lastResourceValueUpdated[bldLike.id] = now
                 }
             }

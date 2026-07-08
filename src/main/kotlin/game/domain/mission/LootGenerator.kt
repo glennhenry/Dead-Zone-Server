@@ -25,10 +25,10 @@ val ALL_LOCS = listOf(
     "random", "office", "store", "military", "weapon", "resource", "police",
     "gear", "tutorial", "fuel", "food", "fridge", "water", "vending", "car",
     "body", "basement", "ammo", "wood", "metal", "cloth", "comms", "hospital",
-    "island", "firstaid"
-) // + the tutorial convenience store (tutorialfuel)
+    "island", "firstaid", "anything", "zmas", "tutorialfuel"
+)
 
-class LootGenerator(
+class LootService(
     private val sceneXML: String,
     private val parameter: LootParameter
 ) {
@@ -114,7 +114,12 @@ class LootGenerator(
         }
     }
 
-    fun insertLoots(): String {
+    /**
+     * Insert loots to the given scene XML from constructor.
+     *
+     * @return The updated XML with loots inserted and the list of [LootContent]s inserted.
+     */
+    fun insertLoots(): Pair<String, List<LootContent>> {
         val docBuilder: DocumentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         val doc: Document = docBuilder.parse(InputSource(StringReader(sceneXML)))
 
@@ -134,9 +139,9 @@ class LootGenerator(
                 val itmsElement = doc.createElement("itms")
 
                 val loots = getRollsFromLocs(srchNode.textContent.split(","))
-                for ((id, type, q) in loots) {
+                for ((lootId, type, q) in loots) {
                     val itm = doc.createElement("itm")
-                    itm.setAttribute("id", id)
+                    itm.setAttribute("id", lootId)
                     itm.setAttribute("type", type)
                     itm.setAttribute("q", q.toString())
                     itmsElement.appendChild(itm)
@@ -155,7 +160,7 @@ class LootGenerator(
 
         val writer = StringWriter()
         transformer.transform(DOMSource(doc), StreamResult(writer))
-        return writer.toString()
+        return writer.toString() to insertedLoots
     }
 
     private fun getRollsFromLocs(locs: List<String>): List<LootContent> {
@@ -163,12 +168,22 @@ class LootGenerator(
         val lootsAmount = (0..6).random()
         val lootResults: MutableList<LootContent> = mutableListOf()
 
+        // Filter to only locations that have loot available
+        val availableLocs = locs.filter { cumulativeLootsPerLoc.containsKey(it) }
+
+        if (availableLocs.isEmpty()) {
+            return emptyList()
+        }
+
         // shuffle the list of locs, and pick one item per loc
         // go back to start if still need more item
-        val shuffledLocs = locs.shuffled()
+        val shuffledLocs = availableLocs.shuffled()
         var i = 0
 
-        while (lootResults.size < lootsAmount) {
+        // upperbound for potential infinite loop
+        val maxAttempts = lootsAmount * shuffledLocs.size + 10
+
+        while (lootResults.size < lootsAmount && i < maxAttempts) {
             val loc = shuffledLocs[i % shuffledLocs.size]
             weightedRandomTree(loc)?.let { lootResults.add(it) }
             i += 1
@@ -199,7 +214,7 @@ class LootGenerator(
         // i.e., weapon, schematics, is limited to 1 but junk items can be 5
 
         return LootContent(
-            itemId = Ids.uuid(),
+            lootId = Ids.uuid(),
             itemIdInXML = res.idInXML,
             quantity = qty,
         )
