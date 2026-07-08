@@ -17,4 +17,6 @@ interface SurvivorRepository {
         srvId: String,
         updatedSurvivor: Survivor
     ): Result<Unit>
+
+    suspend fun addSurvivor(playerId: String, survivor: Survivor): Result<Unit>
 }

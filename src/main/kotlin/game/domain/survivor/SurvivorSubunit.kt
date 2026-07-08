@@ -4,6 +4,8 @@ import encore.datastore.collection.PlayerId
 import encore.fancam.Fancam
 import encore.subunit.Subunit
 import encore.subunit.scope.PlayerScope
+import encore.utils.types.Report
+import encore.utils.types.toReport
 import game.domain.survivor.model.Survivor
 
 /**
@@ -21,9 +23,7 @@ class SurvivorSubunit(
             ?: throw NoSuchElementException("Survivor leader is missing for playerId=$playerId")
     }
 
-    fun getAllSurvivors(): List<Survivor> {
-        return survivors
-    }
+    fun getAllSurvivors(): List<Survivor> = survivors
 
     fun getIndexOfSurvivor(srvId: String?): Int {
         val idx = survivors.indexOfFirst { it.id == srvId }
@@ -31,18 +31,31 @@ class SurvivorSubunit(
         return idx
     }
 
+    suspend fun addNewSurvivor(survivor: Survivor): Report {
+        return survivorRepository.addSurvivor(playerId, survivor)
+            .onFailure {
+                Fancam.error(tag = "survivor") { "Error on addNewSurvivor" }
+            }
+            .onSuccess {
+                survivors.add(survivor)
+            }
+            .toReport()
+    }
+
+
     suspend fun updateSurvivor(
         srvId: String, updateAction: suspend (Survivor) -> Survivor
-    ) {
+    ): Report {
         val idx = getIndexOfSurvivor(srvId)
         val update = updateAction(survivors[idx])
-        val result = survivorRepository.updateSurvivor(playerId, srvId, update)
-        result.onFailure {
-            Fancam.error(tag = "survivor") { "Error on updateSurvivor" }
-        }
-        result.onSuccess {
-            survivors[idx] = update
-        }
+        return survivorRepository.updateSurvivor(playerId, srvId, update)
+            .onFailure {
+                Fancam.error(tag = "survivor") { "Error on updateSurvivor" }
+            }
+            .onSuccess {
+                survivors[idx] = update
+            }
+            .toReport()
     }
 
     override suspend fun debut(scope: PlayerScope): Result<Unit> {
