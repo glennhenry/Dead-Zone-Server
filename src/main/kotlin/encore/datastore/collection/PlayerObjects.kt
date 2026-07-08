@@ -147,7 +147,7 @@ data class PlayerObjects(
                 id = playerSrvId,
                 title = nickname,
                 firstName = nickname,
-                lastName = "",
+                lastName = "DZ",
                 gender = Gender_Constants.MALE.value,
                 portrait = null,
                 classId = SurvivorClassConstants_Constants.PLAYER.value,
