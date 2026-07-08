@@ -228,5 +228,5 @@ fun GameStageInitContext.handlers(serverContext: ServerContext) {
     handler(InitCompleteHandler(serverContext))
     handler(SaveHandler(serverContext))
     handler(ZombieAttackHandler(serverContext))
-    handler(RequestSurvivorCheckHandler())
+    handler(RequestSurvivorCheckHandler(serverContext))
 }

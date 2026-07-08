@@ -1,10 +1,13 @@
 package game.socket.handler.save.misc
 
 import encore.context.ServerContext
+import encore.context.requirePlayerContext
 import game.socket.handler.save.SaveSubHandler
 import game.socket.protocol.SaveDataMethod
 import encore.fancam.Fancam
 import encore.network.transport.Connection
+import game.domain.metadata.model.PlayerFlags_Constants
+import kotlin.experimental.inv
 
 class MiscSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.MISC_SAVES
@@ -23,7 +26,13 @@ class MiscSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.TUTORIAL_COMPLETE -> {
-                Fancam.warn(tag = "save") { "Received 'TUTORIAL_COMPLETE' message [not implemented]" }
+                val playerId = connection.playerId
+                val subunits = serverContext.requirePlayerContext(playerId).subunits
+                val current = subunits.playerObjectMetadata.getPlayerFlags()
+                val bitIndex = PlayerFlags_Constants.TutorialComplete.toInt()
+                val updated = setFlag(current, bitIndex, true)
+                subunits.playerObjectMetadata.updatePlayerFlags(updated)
+                Fancam.info(tag = "misc_save") { "Tutorial completed flag set for playerId=$playerId" }
             }
 
             SaveDataMethod.GET_OFFERS -> {
@@ -54,5 +63,25 @@ class MiscSaveHandler : SaveSubHandler {
                 Fancam.warn(tag = "save") { "Received 'GET_INVENTORY_SIZE' message [not implemented]" }
             }
         }
+    }
+
+    private fun setFlag(flags: ByteArray, bitIndex: Int, value: Boolean): ByteArray {
+        val byteIndex = bitIndex / 8
+        val bitInByte = bitIndex % 8
+
+        val arr = if (flags.size <= byteIndex) {
+            flags.copyOf(byteIndex + 1)
+        } else {
+            flags.copyOf()
+        }
+
+        val mask = (1 shl bitInByte).toByte()
+        arr[byteIndex] = if (value) {
+            (arr[byteIndex].toInt() or mask.toInt()).toByte()
+        } else {
+            (arr[byteIndex].toInt() and mask.inv().toInt()).toByte()
+        }
+
+        return arr
     }
 }
