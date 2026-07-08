@@ -47,7 +47,7 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
         val obj: BigDBObject? = when (objId.table) {
             "PlayerObjects" -> {
                 // update time-dynamic data
-                val updatedBuildings = LazyDataUpdater.updateBuildingTimers(playerObjects.buildings)
+                val updatedBuildings = LazyDataUpdater.removeBuildingTimerIfDone(playerObjects.buildings)
                 val depletedResources = LazyDataUpdater.depleteResources(profile.lastLogin, playerObjects.resources)
                 try {
                     serverContext.dataStore.updatePlayerObjectsField(playerId, "buildings", updatedBuildings)

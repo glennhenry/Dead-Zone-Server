@@ -6,12 +6,15 @@ import encore.context.PlayerContext
 import encore.context.PlayerSubunits
 import encore.datastore.DataStore
 import encore.datastore.MongoCollectionName
+import encore.datastore.collection.Inventory
 import encore.datastore.collection.PlayerId
 import encore.datastore.collection.PlayerObjects
 import encore.network.transport.Connection
 import encore.subunit.scope.PlayerScope
 import game.domain.compound.MongoCompoundRepository
 import game.domain.compound.CompoundSubunit
+import game.domain.items.InventoryRepositoryMongo
+import game.domain.items.InventorySubunit
 import game.domain.metadata.MongoPlayerObjectsMetadataRepository
 import game.domain.metadata.PlayerObjectsMetadataSubunit
 import game.domain.survivor.MongoSurvivorRepository
@@ -38,14 +41,14 @@ class RealContextFactory(
         }
 
         val objectsCollection = mongoDatabase.getCollection<PlayerObjects>(collectionName.playerObjects)
+        val invCollection = mongoDatabase.getCollection<Inventory>(collectionName.inventory)
         val playerObjects = dataStore.getPlayerObjects(playerId)
 
         val survivor = SurvivorSubunit(
             survivorLeaderId = playerObjects?.playerSurvivor!!,
             survivorRepository = MongoSurvivorRepository(objectsCollection)
         )
-        val inventory =
-            game.domain.items.InventorySubunit(inventoryRepository = game.domain.items.InventoryRepositoryMongo())
+        val inventory = InventorySubunit(inventoryRepository = InventoryRepositoryMongo(invCollection))
         val compound = CompoundSubunit(compoundRepository = MongoCompoundRepository(objectsCollection))
         val playerObjectMetadata = PlayerObjectsMetadataSubunit(
             playerObjectsMetadataRepository = MongoPlayerObjectsMetadataRepository(objectsCollection)

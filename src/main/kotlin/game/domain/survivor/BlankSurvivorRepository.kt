@@ -8,6 +8,13 @@ class BlankSurvivorRepository: SurvivorRepository {
         TODO("Not yet implemented")
     }
 
+    override suspend fun addSurvivor(
+        playerId: String,
+        survivor: Survivor
+    ): Result<Unit> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun updateSurvivor(
         playerId: PlayerId,
         srvId: String,

@@ -4,7 +4,7 @@ import encore.definition.GameReference
 import game.definition.ItemsDefinition
 import game.definition.ItemsXmlDataLoader
 import game.definition.XmlDataSource
-import game.domain.mission.LootGenerator
+import game.domain.mission.LootService
 import game.domain.mission.model.LootParameter
 import game.socket.handler.save.mission.response.loadSceneXML
 import org.w3c.dom.Element
@@ -12,7 +12,6 @@ import java.io.BufferedWriter
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 class TestLootManager {
@@ -39,17 +38,13 @@ class TestLootManager {
     val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
     val logFile = File(logDir, "loot_generation_test-$timestamp.log")
 
-    @BeforeTest
-    fun setup() {
-        GameReference.initialize {
-            add(XmlDataSource("assets/game/data/xml/items.xml.gz"), ItemsXmlDataLoader())
-        }
-    }
-
     @Test
     fun testLootGeneration() {
         if (!logDir.exists()) logDir.mkdirs()
 
+        GameReference.initialize {
+            add(XmlDataSource("assets/game/data/xml/items.xml.gz"), ItemsXmlDataLoader())
+        }
         val itemsDefinition = GameReference.get<ItemsDefinition>()
 
         // output to html
@@ -60,7 +55,7 @@ class TestLootManager {
             SCENES_TO_TEST.forEach { filename ->
                 repeat(GENERATION_PER_SCENE) { i ->
                     val sceneXML = loadSceneXML(filename)
-                    val manager = LootGenerator(
+                    val manager = LootService(
                         sceneXML = sceneXML,
                         parameter = PARAMETER1
                     )
