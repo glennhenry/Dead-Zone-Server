@@ -2,6 +2,7 @@ package game.domain.compound.model
 
 import encore.fancam.Fancam
 import encore.utils.identifier.Ids
+import game.domain.items.model.Item
 import game.domain.model.game.data.TimerData
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -13,6 +14,10 @@ import kotlinx.serialization.json.*
 @Serializable(with = BuildingLikeSerializer::class)
 @JsonClassDiscriminator("_t")
 sealed class BuildingLike
+
+fun BuildingLike.toBuilding(): Building {
+    return this as Building
+}
 
 val BuildingLike.id: String
     get() = when (this) {
@@ -27,7 +32,7 @@ val BuildingLike.type: String
     }
 
 val BuildingLike.level: Int
-    get() = when(this) {
+    get() = when (this) {
         is Building -> this.level
         is JunkBuilding -> this.level
     }
@@ -56,7 +61,7 @@ fun BuildingLike.copy(
     resourceValue: Double? = null,
     upgrade: TimerData? = null,
     repair: TimerData? = null,
-    items: List<game.domain.items.model.Item>? = null,
+    items: List<Item>? = null,
     pos: String? = null,
     rot: String? = null
 ): BuildingLike = when (this) {
@@ -99,23 +104,27 @@ data class Building(
     val name: String? = null,
     val type: String,  // building's ID in buildings.xml, not to be confused with type in XML
     val level: Int = 0,
-    val rotation: Int,
-    val tx: Int,
-    val ty: Int,
+    val rotation: Int = 0,
+    val tx: Int = 0,
+    val ty: Int = 0,
     val destroyed: Boolean = false,
     val resourceValue: Double = 0.0,
     val upgrade: TimerData? = null,
     val repair: TimerData? = null
 ) : BuildingLike()
 
+fun Building.toCompactString(): String {
+    return "Building(id=$id, type=$type, level=$level, upgrade=$upgrade, repair=$repair, resourceValue=$resourceValue)"
+}
+
 object BuildingLikeSerializer : JsonContentPolymorphicSerializer<BuildingLike>(BuildingLike::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<BuildingLike> {
         return when (val discriminator = element.jsonObject["_t"]?.jsonPrimitive?.contentOrNull) {
-            "dev.deadzone.core.model.game.data.Building" -> Building.serializer()
-            "dev.deadzone.core.model.game.data.JunkBuilding" -> JunkBuilding.serializer()
+            "game.domain.compound.model.Building" -> Building.serializer()
+            "game.domain.compound.model.JunkBuilding" -> JunkBuilding.serializer()
             null -> {
                 val obj = element.jsonObject
-                return when {
+                when {
                     obj.containsKey("items") && obj.containsKey("pos") && obj.containsKey("rot") ->
                         JunkBuilding.serializer()
 
@@ -125,7 +134,9 @@ object BuildingLikeSerializer : JsonContentPolymorphicSerializer<BuildingLike>(B
             }
 
             else -> {
-                Fancam.error(tag = "bld_serial") { "Error during serialization of BuildingLike type: $element" }
+                Fancam.error {
+                    "Error during serialization of BuildingLike type: $element"
+                }
                 throw SerializationException("Unknown type: '$discriminator'")
             }
         }

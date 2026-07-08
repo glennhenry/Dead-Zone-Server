@@ -1,21 +1,26 @@
 package game.socket.handler
 
+import encore.context.ServerContext
+import encore.context.requirePlayerContext
 import encore.fancam.Fancam
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.time.TimeCenter
+import encore.utils.types.onFail
+import encore.utils.types.onOk
+import game.domain.survivor.model.Survivor
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PIOSerializer
 import game.socket.protocol.PioFanchant
+import kotlin.random.Random
 import kotlin.reflect.KClass
 
 /**
  * Handle `rsc` message by:
  *
  * 1. Sending a reponse in JSON with success set to true
- *
  */
-class RequestSurvivorCheckHandler : FanchantHandler<PioFanchant> {
+class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : FanchantHandler<PioFanchant> {
     override val fanchantType: String = NetworkMessage.REQUEST_SURVIVOR_CHECK
     override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
@@ -26,51 +31,74 @@ class RequestSurvivorCheckHandler : FanchantHandler<PioFanchant> {
         val reponseMsg =
             listOf(
                 NetworkMessage.SEND_RESPONSE,  // Message Type
-                id ?: "m",   // id
+                id ?: "m",                     // id
                 TimeCenter.now().toDouble(),   // server time
-                survivorCheckJson.trimIndent() // response
-            )
-        
-        val newSurvivorMsg =
-            listOf(
-                NetworkMessage.SURVIVOR_NEW,  // Message Type
-                survivorNewJson.trimIndent()
+                """{"success": true}"""        // response
             )
 
-        connection.write(PIOSerializer.serialize(reponseMsg))
-        connection.write(PIOSerializer.serialize(newSurvivorMsg))
+
+        val newSrv = generateSurvivor()
+        val newSurvivorMsg = listOf(NetworkMessage.SURVIVOR_NEW, generateNewSurvivorJson(newSrv))
+
+        val sbs = serverContext.requirePlayerContext(connection.playerId).subunits
+        sbs.survivor.addNewSurvivor(newSrv)
+            .onOk {
+                connection.write(PIOSerializer.serialize(reponseMsg))
+                connection.write(PIOSerializer.serialize(newSurvivorMsg))
+            }
+            .onFail {
+                Fancam.warn { "Sent -1 to client because of addNewSurvivor failure" }
+                connection.write(PIOSerializer.serialize(listOf(-1)))
+            }
     }
-}
 
-const val survivorCheckJson = """{"success": true}"""
+    private fun generateSurvivor(): Survivor {
+        val gender = if (Random.nextBoolean()) "male" else "female"
+        val maleVoices = setOf("white-m", "black-m", "latino-m", "asian-m")
+        val femaleVoices = setOf("white-f", "black-f", "latino-f")
+        val name = (if (gender == "male") maleNames.random() else femaleNames.random()).split(" ")
 
-const val survivorNewJson = """
-{
-  "id": "",
-  "title": "",
-  "firstName": "Shen",
-  "lastName": "Xiaoting",
-  "gender": "male",
-  "classId": "unassigned",
-  "voice": "white-m"
+        return Survivor(
+            firstName = name[0],
+            lastName = name[1],
+            gender = gender,
+            classId = "unassigned",
+            voice = if (gender == "male") maleVoices.random() else femaleVoices.random(),
+            title = "",
+            morale = emptyMap(),
+            injuries = emptyList(),
+            level = 0,
+            xp = 0,
+            missionId = null,
+            assignmentId = null,
+            accessories = emptyMap(),
+            maxClothingAccessories = 1,
+        )
+    }
+
+    private fun generateNewSurvivorJson(srv: Survivor): String {
+        return """
+        {
+            "id": "${srv.id}",
+            "title": "${srv.title}",
+            "firstName": "${srv.firstName}",
+            "lastName": "${srv.lastName}",
+            "gender": "${srv.gender}",
+            "classId": "${srv.classId}",
+            "voice": "${srv.voice}"
+        }
+        """.trimIndent()
+    }
+
+    val maleNames = setOf(
+        "Kim Dayeon", "Ezaki Hikaru", "Kim Chaehyun",
+        "Huening Bahiyyih", "Choi Yujin", "Kang Yeseo",
+        "Shen Xiaoting", "Sakamoto Mashiro", "Seo Youngeun"
+    )
+
+    val femaleNames = setOf(
+        "Kim Dayeon", "Ezaki Hikaru", "Kim Chaehyun",
+        "Huening Bahiyyih", "Choi Yujin", "Kang Yeseo",
+        "Shen Xiaoting", "Sakamoto Mashiro", "Seo Youngeun"
+    )
 }
-"""
-/*
-{
-  "id": null,
-  "title": null,
-  "firstName": null,
-  "lastName": null,
-  "gender": null,
-  "portrait": null,
-  "classId": null,
-  "morale": null,
-  "injuries": null,
-  "missionId": null,
-  "assignmentId": null,
-  "reassignTimer": null,
-  "appearance": null,
-  "scale": null,
-  "voice": null
-}
-*/
