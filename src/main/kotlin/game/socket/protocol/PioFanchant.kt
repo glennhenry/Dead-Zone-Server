@@ -23,7 +23,6 @@ class PioFanchant(
         for (i in 0 until end step 2) {
             val key = raw.getOrNull(i) as? String ?: continue
             val value = raw.getOrNull(i + 1)
-            println("$key=$value")
             put(key, value)
         }
     }
