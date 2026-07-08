@@ -1,8 +1,10 @@
 package game.socket.handler.save.mission.response
 
+import game.domain.items.model.Item
 import game.domain.model.game.data.TimerData
 import game.domain.model.game.data.assignment.AssignmentResult
 import game.domain.survivor.model.Morale
+import game.domain.survivor.model.injury.Injury
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -23,7 +25,7 @@ data class MissionEndResponse(
     val xp: XpBreakdown? = null,
     val returnTimer: TimerData? = null,
     val lockTimer: TimerData? = null,
-    val loot: List<game.domain.items.model.Item> = emptyList(),
+    val loot: List<Item> = emptyList(),
     val itmCounters: Map<String, Int> = emptyMap(), // item id to quantity
     val injuries: List<InjuryData>? = null,
     val survivors: List<SurvivorResult> = emptyList(),
@@ -41,7 +43,7 @@ data class XpBreakdown(
 data class InjuryData(
     val success: Boolean = false, // false = didn't die
     val survivorId: String,
-    val injury: game.domain.survivor.model.injury.Injury
+    val injury: Injury
 )
 
 @Serializable
