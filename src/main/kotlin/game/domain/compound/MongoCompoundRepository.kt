@@ -31,7 +31,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val updateSet = Updates.set("resources", newResources)
 
             objCollection.updateOne(filter, updateSet)
-                .throwIfNotModified("updateGameResources")
+                .throwIfNotModified("updateGameResources", { filter }, { updateSet })
         }
     }
 
@@ -41,7 +41,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val updateAdd = Updates.addToSet("buildings", newBuilding)
 
             objCollection.updateOne(filter, updateAdd)
-                .throwIfNotModified("createBuilding")
+                .throwIfNotModified("createBuilding", { filter }, { updateAdd })
         }
     }
 
@@ -68,7 +68,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val update = Updates.set("buildings.$", updatedBuilding)
 
             objCollection.updateOne(filter, update)
-                .throwIfNotModified("updateBuilding")
+                .throwIfNotModified("updateBuilding", { filter }, { update })
         }
     }
 
@@ -78,7 +78,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val updateDelete = Updates.pull("buildings", Document("id", bldId))
 
             objCollection.updateOne(filter, updateDelete)
-                .throwIfNotModified("deleteBuilding")
+                .throwIfNotModified("deleteBuilding", { filter }, { updateDelete })
         }
     }
 }

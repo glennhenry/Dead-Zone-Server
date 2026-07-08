@@ -140,7 +140,7 @@ class MissionSaveHandler : SaveSubHandler {
                 val svc = serverContext.requirePlayerContext(playerId).subunits
                 val leader = svc.survivor.getSurvivorLeader()
 
-                val playerStats = connection.get("stats") as? MissionStats ?: MissionStats()
+                val playerStats = requireNotNull(connection.get("stats") as? MissionStats) { "mission stats is null on MISSION_END request" }
                 val earnedXp = calculateMissionXp(playerStats.killData)
 
                 val missionId =
@@ -240,13 +240,7 @@ class MissionSaveHandler : SaveSubHandler {
                     act = MissionReturnAct(),
                     concept = MissionReturnActConcept(
                         connection = connection,
-                        missionId = requireNotNull(connection.get("missionId") as? String) {
-                            "missionId null when starting mission return task on MISSION_END (raw=${
-                                connection.get(
-                                    "missionId"
-                                )
-                            })"
-                        },
+                        missionId = missionId,
                         returnTime = 20.seconds // TO-DO should be based on area level
                     ),
                     scope = ActScope(playerId, connection.connectionScope)
@@ -463,7 +457,7 @@ class MissionSaveHandler : SaveSubHandler {
         val items = mutableSetOf<Item>()
 
         lootedIds.forEach { lootId ->
-            val loot = serverInsertedLoots.find { it.lootId == lootId }
+            val loot = serverInsertedLoots.find { it.lootId == lootId.lowercase() }
             if (loot != null) {
                 items.add(
                     Item(

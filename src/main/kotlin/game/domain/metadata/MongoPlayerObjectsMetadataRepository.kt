@@ -24,12 +24,11 @@ class MongoPlayerObjectsMetadataRepository(
 
     override suspend fun updatePlayerFlags(playerId: PlayerId, flags: ByteArray): Result<Unit> {
         return runMongoCatching("No player found with id=$playerId") {
+            val filter = Filters.eq("playerId", playerId)
+            val update = Updates.set("flags", flags)
             objCollection
-                .updateOne(
-                    Filters.eq("playerId", playerId),
-                    Updates.set("flags", flags)
-                )
-                .throwIfNotModified("updatePlayerFlags")
+                .updateOne(filter, update)
+                .throwIfNotModified("updatePlayerFlags", { filter }, { update })
         }
     }
 
@@ -44,12 +43,11 @@ class MongoPlayerObjectsMetadataRepository(
 
     override suspend fun updatePlayerNickname(playerId: PlayerId, nickname: String): Result<Unit> {
         return runMongoCatching("No player found with id=$playerId") {
+            val filter = Filters.eq("playerId", playerId)
+            val update = Updates.set("nickname", nickname)
             objCollection
-                .updateOne(
-                    Filters.eq("playerId", playerId),
-                    Updates.set("nickname", nickname)
-                )
-                .throwIfNotModified("updatePlayerNickname")
+                .updateOne(filter, update)
+                .throwIfNotModified("updatePlayerNickname", { filter }, { update })
         }
     }
 }

@@ -38,17 +38,8 @@ class MongoSurvivorRepository(val objCollection: MongoCollection<PlayerObjects>)
                 Filters.eq("survivors.id", srvId)
             )
             val update = Updates.set("survivors.$", updatedSurvivor)
-            val result = objCollection.updateOne(filter, update)
-
-            if (result.matchedCount != 1L) {
-                throw NoSuchElementException("No player found with id=$playerId")
-            }
-
-            if (result.modifiedCount != 1L) {
-                throw NoSuchElementException("Survivor for playerId=$playerId srvId=$srvId not found")
-            }
-
-            Unit
+            objCollection.updateOne(filter, update)
+                .throwIfNotModified("updateSurvivor", { filter }, { update })
         }
     }
 
@@ -60,7 +51,7 @@ class MongoSurvivorRepository(val objCollection: MongoCollection<PlayerObjects>)
             val filter = Filters.eq(FieldPlayerId, playerId)
             val updateAdd = Updates.addToSet(FieldSurvivors, survivor)
             objCollection.updateOne(filter, updateAdd)
-                .throwIfNotModified("addSurvivor")
+                .throwIfNotModified("addSurvivor", { filter }, { updateAdd })
         }
     }
 }

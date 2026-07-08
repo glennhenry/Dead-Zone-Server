@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.firstOrNull
 val FieldInventory = Inventory::inventory.name
 val FieldSchematics = Inventory::schematics.name
 
-class InventoryRepositoryMongo(
+class MongoInventoryRepository(
     private val inventoryCollection: MongoCollection<Inventory>
 ) : InventoryRepository {
     override suspend fun getInventory(playerId: String): Result<Inventory> {
