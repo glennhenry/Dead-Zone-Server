@@ -85,7 +85,7 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
         )
         // account.email unique
         accounts.createIndex(
-            Indexes.ascending(FieldEmail), IndexOptions().unique(true)
+            Indexes.ascending(FieldEmail), IndexOptions().unique(false)
         )
     }
 
