@@ -25,6 +25,7 @@ import game.definition.XmlDataSource
 import game.domain.compound.model.Building
 import game.domain.compound.model.BuildingLike
 import game.domain.compound.model.JunkBuilding
+import game.domain.metadata.model.ByteArrayAsBinarySerializer
 import game.routes.ApiRoutes
 import game.routes.AuthRoutes
 import game.routes.DebugLogRoutes
@@ -94,6 +95,7 @@ suspend fun Application.configureApplication() {
             polymorphic(BuildingLike::class) {
                 subclass(Building::class, Building.serializer())
                 subclass(JunkBuilding::class, JunkBuilding.serializer())
+                contextual(ByteArray::class, ByteArrayAsBinarySerializer)
             }
         },
         security = security
