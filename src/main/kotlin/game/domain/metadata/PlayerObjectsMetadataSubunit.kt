@@ -4,6 +4,8 @@ import encore.datastore.collection.PlayerId
 import encore.fancam.Fancam
 import encore.subunit.Subunit
 import encore.subunit.scope.PlayerScope
+import encore.utils.types.Report
+import encore.utils.types.toReport
 import game.domain.metadata.model.PlayerFlags
 
 class PlayerObjectsMetadataSubunit(
@@ -13,24 +15,26 @@ class PlayerObjectsMetadataSubunit(
     private var nickname: String? = null // nickname null will prompt leader creation
     private lateinit var playerId: PlayerId
 
-    suspend fun updatePlayerFlags(flags: ByteArray) {
-        val result = playerObjectsMetadataRepository.updatePlayerFlags(playerId, flags)
-        result.onFailure {
-            Fancam.error(tag = "metadata") { "Error updatePlayerFlags" }
-        }
-        result.onSuccess {
-            this.flags = flags
-        }
+    suspend fun updatePlayerFlags(flags: ByteArray): Report {
+        return playerObjectsMetadataRepository.updatePlayerFlags(playerId, flags)
+            .onFailure {
+                Fancam.error(tag = "metadata") { "Error updatePlayerFlags" }
+            }
+            .onSuccess {
+                this.flags = flags
+            }
+            .toReport()
     }
 
-    suspend fun updatePlayerNickname(nickname: String) {
-        val result = playerObjectsMetadataRepository.updatePlayerNickname(playerId, nickname)
-        result.onFailure {
-            Fancam.error(tag = "metadata") { "Error updatePlayerNickname" }
-        }
-        result.onSuccess {
-            this.nickname = nickname
-        }
+    suspend fun updatePlayerNickname(nickname: String): Report {
+        return playerObjectsMetadataRepository.updatePlayerNickname(playerId, nickname)
+            .onFailure {
+                Fancam.error(tag = "metadata") { "Error updatePlayerNickname" }
+            }
+            .onSuccess {
+                this.nickname = nickname
+            }
+            .toReport()
     }
 
     fun getPlayerFlags() = flags
