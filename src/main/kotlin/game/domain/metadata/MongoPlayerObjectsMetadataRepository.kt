@@ -6,7 +6,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import encore.datastore.collection.PlayerId
 import encore.datastore.collection.PlayerObjects
 import encore.datastore.runMongoCatching
-import encore.datastore.throwIfNotModified
+import encore.datastore.throwIfNothingMatched
 import kotlinx.coroutines.flow.firstOrNull
 
 class MongoPlayerObjectsMetadataRepository(
@@ -28,7 +28,7 @@ class MongoPlayerObjectsMetadataRepository(
             val update = Updates.set("flags", flags)
             objCollection
                 .updateOne(filter, update)
-                .throwIfNotModified("updatePlayerFlags", { filter }, { update })
+                .throwIfNothingMatched("updatePlayerFlags", { filter })
         }
     }
 
@@ -47,7 +47,7 @@ class MongoPlayerObjectsMetadataRepository(
             val update = Updates.set("nickname", nickname)
             objCollection
                 .updateOne(filter, update)
-                .throwIfNotModified("updatePlayerNickname", { filter }, { update })
+                .throwIfNothingMatched("updatePlayerNickname", { filter })
         }
     }
 }

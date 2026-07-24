@@ -31,8 +31,7 @@ import game.domain.survivor.SurvivorSubunit
 class RealContextFactory(
     private val dataStore: DataStore,
     private val collectionName: MongoCollectionName,
-    private val mongoDatabase: MongoDatabase,
-    private val inventoryCollection: MongoCollection<Inventory>
+    private val mongoDatabase: MongoDatabase
 ) : ContextFactory {
     override suspend fun createContext(
         playerId: PlayerId,
@@ -43,6 +42,7 @@ class RealContextFactory(
         }
 
         val objectsCollection = mongoDatabase.getCollection<PlayerObjects>(collectionName.playerObjects)
+        val inventoryCollection = mongoDatabase.getCollection<Inventory>(collectionName.inventory)
         val playerObjects = dataStore.getPlayerObjects(playerId)
 
         val survivor = SurvivorSubunit(

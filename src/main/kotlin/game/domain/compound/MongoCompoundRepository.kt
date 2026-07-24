@@ -6,7 +6,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import encore.datastore.collection.PlayerId
 import encore.datastore.collection.PlayerObjects
 import encore.datastore.runMongoCatching
-import encore.datastore.throwIfNotModified
+import encore.datastore.throwIfNothingMatched
 import game.domain.compound.model.BuildingLike
 import game.domain.compound.model.GameResources
 import kotlinx.coroutines.flow.firstOrNull
@@ -31,7 +31,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val updateSet = Updates.set("resources", newResources)
 
             objCollection.updateOne(filter, updateSet)
-                .throwIfNotModified("updateGameResources", { filter }, { updateSet })
+                .throwIfNothingMatched("updateGameResources", { filter })
         }
     }
 
@@ -41,7 +41,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val updateAdd = Updates.addToSet("buildings", newBuilding)
 
             objCollection.updateOne(filter, updateAdd)
-                .throwIfNotModified("createBuilding", { filter }, { updateAdd })
+                .throwIfNothingMatched("createBuilding", { filter })
         }
     }
 
@@ -68,7 +68,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val update = Updates.set("buildings.$", updatedBuilding)
 
             objCollection.updateOne(filter, update)
-                .throwIfNotModified("updateBuilding", { filter }, { update })
+                .throwIfNothingMatched("updateBuilding", { filter })
         }
     }
 
@@ -78,7 +78,7 @@ class MongoCompoundRepository(val objCollection: MongoCollection<PlayerObjects>)
             val updateDelete = Updates.pull("buildings", Document("id", bldId))
 
             objCollection.updateOne(filter, updateDelete)
-                .throwIfNotModified("deleteBuilding", { filter }, { updateDelete })
+                .throwIfNothingMatched("deleteBuilding", { filter })
         }
     }
 }

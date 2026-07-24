@@ -6,7 +6,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import encore.datastore.FieldPlayerId
 import encore.datastore.collection.Inventory
 import encore.datastore.runMongoCatching
-import encore.datastore.throwIfNotModified
+import encore.datastore.throwIfNothingMatched
 import game.domain.items.model.Item
 import kotlinx.coroutines.flow.firstOrNull
 
@@ -33,7 +33,7 @@ class MongoInventoryRepository(
             val update = Updates.set(FieldInventory, updatedInventory)
             inventoryCollection
                 .updateOne(filter, update)
-                .throwIfNotModified("updateInventory not updated for $playerId", { filter }, { update })
+                .throwIfNothingMatched("updateInventory not updated for $playerId", { filter })
         }
     }
 
@@ -46,7 +46,7 @@ class MongoInventoryRepository(
             val update = Updates.set(FieldSchematics, updatedSchematics)
             inventoryCollection
                 .updateOne(filter, update)
-                .throwIfNotModified("updateSchematics not updated for $playerId", { filter }, { update })
+                .throwIfNothingMatched("updateSchematics not updated for $playerId", { filter })
         }
     }
 }

@@ -7,7 +7,7 @@ import encore.datastore.FieldPlayerId
 import encore.datastore.collection.PlayerId
 import encore.datastore.collection.PlayerObjects
 import encore.datastore.runMongoCatching
-import encore.datastore.throwIfNotModified
+import encore.datastore.throwIfNothingMatched
 import game.domain.survivor.model.Survivor
 import kotlinx.coroutines.flow.firstOrNull
 
@@ -39,7 +39,7 @@ class MongoSurvivorRepository(val objCollection: MongoCollection<PlayerObjects>)
             )
             val update = Updates.set("survivors.$", updatedSurvivor)
             objCollection.updateOne(filter, update)
-                .throwIfNotModified("updateSurvivor", { filter }, { update })
+                .throwIfNothingMatched("updateSurvivor", { filter })
         }
     }
 
@@ -51,7 +51,7 @@ class MongoSurvivorRepository(val objCollection: MongoCollection<PlayerObjects>)
             val filter = Filters.eq(FieldPlayerId, playerId)
             val updateAdd = Updates.addToSet(FieldSurvivors, survivor)
             objCollection.updateOne(filter, updateAdd)
-                .throwIfNotModified("addSurvivor", { filter }, { updateAdd })
+                .throwIfNothingMatched("addSurvivor", { filter })
         }
     }
 }
