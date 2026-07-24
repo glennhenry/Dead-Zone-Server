@@ -457,7 +457,7 @@ class MissionSaveHandler : SaveSubHandler {
         val items = mutableSetOf<Item>()
 
         lootedIds.forEach { lootId ->
-            val loot = serverInsertedLoots.find { it.lootId == lootId.lowercase() }
+            val loot = serverInsertedLoots.find { it.lootId == lootId }
             if (loot != null) {
                 items.add(
                     Item(
