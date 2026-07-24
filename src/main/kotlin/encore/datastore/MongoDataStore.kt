@@ -140,12 +140,11 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
         playerServerObjects: PlayerServerObjects
     ): Result<Unit> {
         return runMongoCatching {
-            ensureAck(accounts.insertOne(account))
-                .and(this.playerObjects.insertOne(playerObjects))
-                .and(this.playerServerObjects.insertOne(playerServerObjects))
-                .and(this.neighbors.insertOne(neighborHistory))
-                .and(this.inventories.insertOne(inventory))
-                .asUnit()
+            accounts.insertOne(account)
+            this.playerObjects.insertOne(playerObjects)
+            this.playerServerObjects.insertOne(playerServerObjects)
+            this.neighbors.insertOne(neighborHistory)
+            this.inventories.insertOne(inventory).asUnit()
         }
     }
 
@@ -159,12 +158,16 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
 
     override suspend fun delete(playerId: PlayerId): Result<Unit> {
         return runMongoCatching {
-            ensureAck(accounts.deleteOne(Filters.eq(FieldPlayerId, playerId)))
-                .and(playerObjects.deleteOne(Filters.eq(FieldPlayerId, playerId)))
-                .and(playerServerObjects.deleteOne(Filters.eq(FieldPlayerId, playerId)))
-                .and(neighbors.deleteOne(Filters.eq(FieldPlayerId, playerId)))
-                .and(inventories.deleteOne(Filters.eq(FieldPlayerId, playerId)))
-                .asUnit()
+            accounts.deleteOne(Filters.eq(FieldPlayerId, playerId))
+                .throwIfNothingDeleted("accounts")
+            playerObjects.deleteOne(Filters.eq(FieldPlayerId, playerId))
+                .throwIfNothingDeleted("playerObjects")
+            playerServerObjects.deleteOne(Filters.eq(FieldPlayerId, playerId))
+                .throwIfNothingDeleted("playerServerObjects")
+            neighbors.deleteOne(Filters.eq(FieldPlayerId, playerId))
+                .throwIfNothingDeleted("neighbors")
+            inventories.deleteOne(Filters.eq(FieldPlayerId, playerId))
+                .throwIfNothingDeleted("inventories")
         }
     }
 

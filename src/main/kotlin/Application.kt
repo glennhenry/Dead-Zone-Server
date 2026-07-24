@@ -100,7 +100,6 @@ suspend fun Application.configureApplication() {
         appScope = appScope,
         serverSubunitScope = serverSubunitScope,
         collectionName = MongoCollectionName,
-        mongoClient = mongoc,
         mongoDatabase = db
     )
 
