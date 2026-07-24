@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package game.domain.items.model
 
 import encore.definition.GameReference
