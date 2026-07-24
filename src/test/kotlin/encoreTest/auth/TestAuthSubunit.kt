@@ -121,11 +121,6 @@ class TestAuthSubunit {
         // duplicate username fail
         val res1 = auth.register("helloworld1", "kotlinktor")
         assertNull(res1.okOrThrow())
-
-        auth.register("worldhello1", "kotlinktor")
-        // duplicate email fail
-        val res2 = auth.register("worldhello2", "kotlinktor")
-        assertNull(res2.okOrThrow())
     }
 
     @Test

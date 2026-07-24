@@ -49,7 +49,7 @@ class TestItemsDefinition {
     }
 
     private fun expectResource(idInXml: String, expected: GameResources) {
-        def.getResourceAmount(idInXml)?.let { assertEquals(it, expected) }
+        def.getResourceAmount(idInXml)?.let { assertEquals(expected, it) }
     }
 
     @Test
@@ -68,6 +68,6 @@ class TestItemsDefinition {
     }
 
     private fun expectStack(idInXml: String, expected: Int) {
-        assertEquals(def.getMaxStackOfItem(idInXml), expected)
+        assertEquals(expected, def.getMaxStackOfItem(idInXml))
     }
 }
