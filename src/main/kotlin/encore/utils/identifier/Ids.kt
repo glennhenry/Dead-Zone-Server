@@ -60,7 +60,7 @@ object Ids {
      * and [SecureRandom].
      */
     fun uuid(): String {
-        return UUID(random.nextLong(), random.nextLong()).toString()
+        return UUID(random.nextLong(), random.nextLong()).toString().uppercase()
     }
 
     /**
