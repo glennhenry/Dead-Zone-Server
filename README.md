@@ -55,7 +55,7 @@ Every variables can be overriden from OS environment variables. For example, in 
 ```ps1
 $env:ENCORE_DEV_MODE = "false"
 $env:ENCORE_SERVER_PORT = "1234"
-java -jar encore.jar
+java -jar dzserver.jar
 ```
 
 More information in [Venue.kt](https://github.com/glennhenry/Encore/blob/main/src/main/kotlin/encore/venue/Venue.kt)
