@@ -370,8 +370,9 @@ class BuildingSaveHandler : SaveSubHandler {
                         }
 
                         // end the currently active building task
+                        val idt = Ids.join(playerId, bldId)
                         val actId =
-                            requireNotNull(ActIdStore.find(bldId)) { "Null during ActIdStore.find(bldId=$bldId)" }
+                            requireNotNull(ActIdStore.find(idt)) { "Null during ActIdStore.find(bldId=$bldId)" }
                         serverContext.stageActDirector.stop(actId)
 
                         // then restart it to change the timer
@@ -513,8 +514,9 @@ class BuildingSaveHandler : SaveSubHandler {
                         }
 
                         // end the currently active building repair task
+                        val idt = Ids.join(playerId, bldId)
                         val actId =
-                            requireNotNull(ActIdStore.find(bldId)) { "Null during ActIdStore.find(bldId=$bldId)" }
+                            requireNotNull(ActIdStore.find(idt)) { "Null during ActIdStore.find(bldId=$bldId)" }
                         serverContext.stageActDirector.stop(actId)
 
                         // then restart it to change the timer
