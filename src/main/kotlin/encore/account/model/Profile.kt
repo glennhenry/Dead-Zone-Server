@@ -19,10 +19,10 @@ data class Profile(
     val playerId: PlayerId,
     val email: String = "",
     val displayName: String = "",
-    val avatarUrl: String = "",
+    val avatarUrl: String = "http://picsum.photos/200/300",
     val createdAt: Long = TimeCenter.now(),
     val lastLogin: Long = TimeCenter.now(),
-    val countryCode: String? = null,
+    val countryCode: String? = "en",
     val friends: Set<Profile> = emptySet(),
     val enemies: Set<Profile> = emptySet(),
 )

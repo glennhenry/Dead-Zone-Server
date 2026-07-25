@@ -40,7 +40,6 @@ class RealPlayerCreationFactory : PlayerCreationFactory {
                 email = email,
                 createdAt = now,
                 lastLogin = now,
-                avatarUrl = ""
             ),
         )
         return account

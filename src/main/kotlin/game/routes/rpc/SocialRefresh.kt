@@ -1,8 +1,8 @@
 package game.routes.rpc
 
-import game.context.ServerContext
 import encore.utils.types.okOrThrow
 import game.Globals
+import game.context.ServerContext
 import game.routes.message.social.SocialProfile
 import game.routes.message.social.SocialRefreshOutput
 import io.ktor.server.request.*
@@ -32,17 +32,18 @@ suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: St
     val socialRefreshOutput = if (pid == Globals.ADMIN_PLAYER_ID) {
         SocialRefreshOutput.admin()
     } else {
+        val sp = SocialProfile(
+            userId = pid,
+            displayName = profile.displayName,
+            avatarUrl = profile.avatarUrl,
+            lastOnline = profile.lastLogin,
+            countryCode = profile.countryCode ?: "en",
+            userToken = token,
+        )
         SocialRefreshOutput(
-            myProfile = SocialProfile(
-                userId = pid,
-                displayName = profile.displayName,
-                avatarUrl = profile.avatarUrl,
-                lastOnline = profile.lastLogin,
-                countryCode = profile.countryCode ?: "",
-                userToken = token,
-            ),
-            friends = emptyList(),
-            blocked = ""
+            myProfile = sp,
+            friends = listOf(sp),
+            blocked = "no one"
         )
     }
 
