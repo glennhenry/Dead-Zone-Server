@@ -1,4 +1,4 @@
-package encore.datastore.collection
+package game.mongo.collection
 
 import game.domain.model.network.RemotePlayerData
 
@@ -7,7 +7,7 @@ import game.domain.model.network.RemotePlayerData
  */
 data class NeighborHistory(
     val playerId: PlayerId, // reference to UserDocument
-    val map: Map<String, game.domain.model.network.RemotePlayerData>? = emptyMap()
+    val map: Map<String, RemotePlayerData>? = emptyMap()
 ) {
     companion object {
         fun empty(pid: String): NeighborHistory {

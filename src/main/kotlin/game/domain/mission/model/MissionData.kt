@@ -1,6 +1,6 @@
 package game.domain.mission.model
 
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerId
 import game.domain.model.game.data.TimerData
 import kotlinx.serialization.Serializable
 import game.domain.survivor.model.SurvivorData

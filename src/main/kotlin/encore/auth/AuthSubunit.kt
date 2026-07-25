@@ -4,7 +4,7 @@ import com.mongodb.MongoWriteException
 import com.toxicbakery.bcrypt.Bcrypt
 import encore.EncoreConfig
 import encore.account.AccountSubunit
-import encore.account.PlayerCreationSubunit
+import encore.creation.PlayerCreationSubunit
 import encore.fancam.Fancam
 import encore.fancam.Tags
 import encore.session.SessionSubunit

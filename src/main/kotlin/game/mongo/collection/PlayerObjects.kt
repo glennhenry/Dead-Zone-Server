@@ -1,4 +1,4 @@
-package encore.datastore.collection
+package game.mongo.collection
 
 import game.Globals
 import game.domain.compound.model.BuildingCollection
@@ -10,6 +10,7 @@ import game.domain.metadata.model.toByteArray
 import game.domain.mission.model.MissionData
 import game.domain.model.data.HighActivity
 import game.domain.model.data.Notification
+import game.domain.model.data.user.AbstractUser
 import game.domain.model.game.data.BatchRecycleJob
 import game.domain.model.game.data.Task
 import game.domain.model.game.data.TaskCollection
@@ -33,7 +34,7 @@ data class PlayerObjects(
     val playerId: PlayerId, // reference to UserDocument
 
     val key: String,                                  // unknown what key is used for
-    val user: Map<String, game.domain.model.data.user.AbstractUser> = emptyMap(), // unknown what user is used for
+    val user: Map<String, AbstractUser> = emptyMap(), // unknown what user is used for
     val admin: Boolean,
 
     @Serializable(with = ByteArrayAsBinarySerializer::class)

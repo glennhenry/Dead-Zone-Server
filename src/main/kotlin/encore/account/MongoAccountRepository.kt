@@ -7,10 +7,28 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import encore.account.model.Credentials
 import encore.account.model.Profile
 import encore.datastore.*
-import encore.datastore.collection.PlayerAccount
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerAccount
+import game.mongo.collection.PlayerId
 import kotlinx.coroutines.flow.firstOrNull
 import org.bson.codecs.pojo.annotations.BsonId
+
+/** `playerId`*/
+val FieldPlayerId = PlayerAccount::playerId.name
+
+/** `username`*/
+val FieldUsername = PlayerAccount::username.name
+
+/** `email`*/
+val FieldEmail = Profile::email.name
+
+/** `hashedPassword`*/
+val FieldPassword = PlayerAccount::hashedPassword.name
+
+/** `profile`*/
+val FieldProfile = PlayerAccount::profile.name
+
+/** `profile.lastLogin`*/
+val FieldProfileLastLogin = "$FieldProfile.${Profile::lastLogin.name}"
 
 /**
  * [AccountRepository] implementation using MongoDB.

@@ -1,11 +1,11 @@
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import encore.datastore.MongoCollectionName
+import game.mongo.MongoCollections
 import org.bson.Document
 
 const val DZ_SERVER_TEST_DB_NAME = "DZ_Server-test-DB"
 const val MONGO_TEST_URL = "mongodb://localhost:27017"
-val TestMongoCollectionName = MongoCollectionName(
+val TestMongoCollections = MongoCollections(
     playerAccount = "test_player_account",
     playerObjects = "test_player_objects",
     neighborHistory = "test_neighbor_history",

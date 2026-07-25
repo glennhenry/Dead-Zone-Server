@@ -1,6 +1,6 @@
 package game.routes.rpc
 
-import encore.context.ServerContext
+import game.context.ServerContext
 import encore.utils.types.okOrThrow
 import game.Globals
 import game.routes.message.social.SocialProfile

@@ -1,8 +1,8 @@
 package encore.account.model
 
-import encore.datastore.collection.PlayerId
-import kotlinx.serialization.Serializable
 import encore.time.TimeCenter
+import game.mongo.collection.PlayerId
+import kotlinx.serialization.Serializable
 
 /**
  * Player profile information.

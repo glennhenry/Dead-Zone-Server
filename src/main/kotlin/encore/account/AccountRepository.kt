@@ -1,9 +1,9 @@
 package encore.account
 
+import game.mongo.collection.PlayerAccount
+import game.mongo.collection.PlayerId
 import encore.account.model.Credentials
 import encore.account.model.Profile
-import encore.datastore.collection.PlayerAccount
-import encore.datastore.collection.PlayerId
 
 /**
  * Repository for [PlayerAccount] core collection.

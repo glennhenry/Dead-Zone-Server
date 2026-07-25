@@ -5,51 +5,41 @@ import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import encore.datastore.collection.Inventory
-import encore.datastore.collection.NeighborHistory
-import encore.datastore.collection.PlayerAccount
-import encore.datastore.collection.PlayerId
-import encore.datastore.collection.PlayerObjects
-import encore.datastore.collection.PlayerServerObjects
-import encore.datastore.collection.ServerObjects
+import encore.account.FieldEmail
+import encore.account.FieldPlayerId
+import encore.account.FieldUsername
+import game.mongo.collection.Inventory
+import game.mongo.collection.NeighborHistory
 import encore.fancam.Fancam
 import encore.fancam.Tags
 import encore.utils.support.asUnit
+import game.mongo.MongoCollections
+import game.mongo.collection.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.firstOrNull
+import org.bson.conversions.Bson
 import kotlin.time.measureTime
 
-/**
- * Encompasses the name of mongo database collection for the 4 base collections.
- */
-data class MongoCollectionName(
-    val playerAccount: String,
-    val playerObjects: String,
-    val neighborHistory: String,
-    val inventory: String,
-    val playerServerObjects: String,
-    val serverObjects: String
-)
+/** `dbId`*/
+val ServerObjectsDbId = ServerObjects::dbId.name
+
+/** Mongo filters for `dbId` equals [ServerObjectsId]*/
+val ServerObjectsFilter: Bson = Filters.eq(ServerObjectsDbId, ServerObjectsId)
 
 /**
  * Implementation of [DataStore] with Kotlin MongoDB coroutine driver.
- *
- * The four core collections are implemented as one collection each.
- * Separating data per-domain to different collections may result better for
- * scalability and performance. However, for simplicity, data is unified
- * to reduce domain modelling decision and to keep implementation faster to write.
  */
-class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : DataStore {
-    private val accounts = db.getCollection<PlayerAccount>(collectionName.playerAccount)
+class MongoDataStore(db: MongoDatabase, collections: MongoCollections) : DataStore {
+    private val accounts = db.getCollection<PlayerAccount>(collections.playerAccount)
 
-    private val playerObjects = db.getCollection<PlayerObjects>(collectionName.playerObjects)
-    private val neighbors = db.getCollection<NeighborHistory>(collectionName.neighborHistory)
-    private val inventories = db.getCollection<Inventory>(collectionName.inventory)
+    private val playerObjects = db.getCollection<PlayerObjects>(collections.playerObjects)
+    private val neighbors = db.getCollection<NeighborHistory>(collections.neighborHistory)
+    private val inventories = db.getCollection<Inventory>(collections.inventory)
 
-    private val playerServerObjects = db.getCollection<PlayerServerObjects>(collectionName.playerServerObjects)
-    private val serverObjects = db.getCollection<ServerObjects>(collectionName.serverObjects)
+    private val playerServerObjects = db.getCollection<PlayerServerObjects>(collections.playerServerObjects)
+    private val serverObjects = db.getCollection<ServerObjects>(collections.serverObjects)
 
     private val initJob = CoroutineScope(Dispatchers.IO).async { setupCollections() }
 
@@ -83,10 +73,6 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
         accounts.createIndex(
             Indexes.ascending(FieldUsername), IndexOptions().unique(true)
         )
-        // account.email unique
-        accounts.createIndex(
-            Indexes.ascending(FieldEmail), IndexOptions().unique(false)
-        )
     }
 
     private suspend fun prepareServerObjects() {
@@ -103,36 +89,32 @@ class MongoDataStore(db: MongoDatabase, collectionName: MongoCollectionName) : D
         }
     }
 
-    override suspend fun playerExists(playerId: PlayerId): Boolean {
+    override suspend fun accountExists(playerId: PlayerId): Boolean {
         return accounts.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull() != null
     }
 
-    override suspend fun getPlayerAccount(playerId: PlayerId): PlayerAccount? {
-        return accounts.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
-    }
-
-    override suspend fun getPlayerObjects(playerId: PlayerId): PlayerObjects? {
+    override suspend fun playerObjects(playerId: PlayerId): PlayerObjects? {
         return playerObjects.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
     }
 
-    override suspend fun getNeighbourHistory(playerId: PlayerId): NeighborHistory? {
-        return neighbors.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
+    override suspend fun loadObjects(playerId: PlayerId): Triple<PlayerObjects, NeighborHistory, Inventory>? {
+        return try {
+            val a = playerObjects.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
+            val b = neighbors.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
+            val c = inventories.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
+            return if (a != null && b != null && c != null) {
+                Triple(a, b, c)
+            } else {
+                Fancam.error(tag = Tags.Datastore) { "One of the field is null: (a.null=${a == null}, b.null=${b == null}, c.null=${c == null})" }
+                null
+            }
+        } catch (e: Exception) {
+            Fancam.error(e, Tags.Datastore) { "Mongo error on load objects" }
+            null
+        }
     }
 
-    override suspend fun getInventory(playerId: PlayerId): Inventory? {
-        return inventories.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
-    }
-
-    override suspend fun getPlayerServerObjects(playerId: PlayerId): PlayerServerObjects? {
-        return playerServerObjects.find(Filters.eq(FieldPlayerId, playerId)).firstOrNull()
-    }
-
-    override suspend fun getServerObjects(): ServerObjects {
-        return serverObjects.find(ServerObjectsFilter).firstOrNull()
-            ?: throw NoSuchElementException("ServerObjects not found, please ensure ServerObjects creation.")
-    }
-
-    override suspend fun create(
+    override suspend fun insert(
         account: PlayerAccount,
         playerObjects: PlayerObjects,
         neighborHistory: NeighborHistory,

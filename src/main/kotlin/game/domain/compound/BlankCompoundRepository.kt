@@ -1,6 +1,6 @@
 package game.domain.compound
 
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerId
 import game.domain.compound.model.BuildingLike
 import game.domain.compound.model.GameResources
 

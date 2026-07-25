@@ -1,7 +1,7 @@
 package game.socket.handler
 
-import encore.context.ServerContext
-import encore.context.requirePlayerContext
+import game.context.ServerContext
+import game.context.requirePlayerContext
 import encore.fancam.Fancam
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext

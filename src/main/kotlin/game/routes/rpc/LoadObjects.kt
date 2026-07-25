@@ -1,7 +1,7 @@
 package game.routes.rpc
 
-import encore.context.ServerContext
-import encore.datastore.collection.NeighborHistory
+import game.context.ServerContext
+import game.mongo.collection.NeighborHistory
 import encore.fancam.Fancam
 import encore.utils.types.okOrNull
 import game.domain.login.LazyDataUpdater
@@ -39,10 +39,7 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
         // valid UUID won't end with -2
         if (playerId.endsWith("-2")) continue
         val profile = serverContext.subunits.account.getProfile(playerId).okOrNull() ?: continue
-
-        val playerObjects = serverContext.dataStore.getPlayerObjects(playerId)!!
-        val neighborHistory = serverContext.dataStore.getNeighbourHistory(playerId)!!
-        val inventory = serverContext.dataStore.getInventory(playerId)!!
+        val (playerObjects, neighborHistory, inventory) = serverContext.dataStore.loadObjects(playerId) ?: return
 
         val obj: BigDBObject? = when (objId.table) {
             "PlayerObjects" -> {

@@ -1,7 +1,7 @@
 package game.socket.handler
 
 import encore.acts.ActScope
-import encore.context.ServerContext
+import game.context.ServerContext
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.network.handler.playerId

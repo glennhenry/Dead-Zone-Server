@@ -3,8 +3,8 @@ package game.domain.items
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import encore.datastore.FieldPlayerId
-import encore.datastore.collection.Inventory
+import encore.account.FieldPlayerId
+import game.mongo.collection.Inventory
 import encore.datastore.runMongoCatching
 import encore.datastore.throwIfNothingMatched
 import game.domain.items.model.Item

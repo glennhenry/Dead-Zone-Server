@@ -1,6 +1,6 @@
 package game.domain.survivor
 
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerId
 import encore.fancam.Fancam
 import encore.subunit.Subunit
 import encore.subunit.scope.PlayerScope

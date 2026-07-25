@@ -1,6 +1,6 @@
 package game.domain.metadata
 
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerId
 
 class BlankPlayerObjectsMetadataRepository: PlayerObjectsMetadataRepository {
     override suspend fun getPlayerFlags(playerId: PlayerId): Result<ByteArray> {

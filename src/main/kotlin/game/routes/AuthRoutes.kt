@@ -1,7 +1,7 @@
 package game.routes
 
 import encore.auth.LoginResult
-import encore.context.ServerContext
+import game.context.ServerContext
 import encore.fancam.Fancam
 import encore.route.RouteHandler
 import encore.route.guard.NoAuthGuard

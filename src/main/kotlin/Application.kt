@@ -3,8 +3,7 @@ import encore.EncoreIdentity
 import encore.EncoreIdentity.celebrate
 import encore.backstage.BackstageRoutes
 import encore.backstage.command.ExampleCommand
-import encore.context.ServerContext
-import encore.datastore.MongoCollectionName
+import game.context.ServerContext
 import encore.definition.GameReference
 import encore.network.lifecycle.PlayerLifecycle
 import encore.network.stage.GameStage
@@ -20,12 +19,14 @@ import encore.venue.Venue
 import encore.websocket.handler.WsCommandHandler
 import game.GameIdentity
 import game.Globals
+import game.context.RealContextFactory
 import game.definition.ItemsXmlDataLoader
 import game.definition.XmlDataSource
 import game.domain.compound.model.Building
 import game.domain.compound.model.BuildingLike
 import game.domain.compound.model.JunkBuilding
 import game.domain.metadata.model.ByteArrayAsBinarySerializer
+import game.mongo.RuntimeMongoCollections
 import game.routes.*
 import game.socket.handler.*
 import game.socket.protocol.PioFanchantGuide
@@ -57,15 +58,6 @@ fun main() {
     ) { configureApplication() }.start(wait = true)
 }
 
-val MongoCollectionName = MongoCollectionName(
-    playerAccount = "player_account",
-    playerObjects = "player_objects",
-    neighborHistory = "neighbor_history",
-    inventory = "inventory",
-    playerServerObjects = "player_server_objects",
-    serverObjects = "server_objects"
-)
-
 val SystemTimezone: ZoneId = ZoneId.systemDefault()
 
 /**
@@ -80,7 +72,7 @@ suspend fun Application.configureApplication() {
     val security = DefaultSecurity(bannedAddresses, TimeCenter.source)
 
     // setup the framework
-    val (mongoc, db) = installEncore(
+    val db = installEncore(
         module = SerializersModule {
             polymorphic(BuildingLike::class) {
                 subclass(Building::class, Building.serializer())
@@ -96,12 +88,8 @@ suspend fun Application.configureApplication() {
     val serverSubunitScope = ServerScope
 
     // create server context
-    val serverContext = createServerContext(
-        appScope = appScope,
-        serverSubunitScope = serverSubunitScope,
-        collectionName = MongoCollectionName,
-        mongoDatabase = db
-    )
+    val serverContext = RealContextFactory(RuntimeMongoCollections, db)
+        .serverContext(appScope, serverSubunitScope)
 
     // initialize GameReference and register definitions
     gameReference()

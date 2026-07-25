@@ -1,6 +1,6 @@
 package game.routes.rpc
 
-import encore.context.ServerContext
+import game.context.ServerContext
 import encore.fancam.Fancam
 import encore.serialization.Protobuf
 import encore.venue.Venue

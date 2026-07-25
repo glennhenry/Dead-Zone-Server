@@ -1,6 +1,6 @@
 package game.domain.metadata
 
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerId
 
 /**
  * Repository for uncategorized fields in PlayerObjects like nickname, flags

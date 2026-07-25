@@ -3,9 +3,9 @@ package game.domain.survivor
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import encore.datastore.FieldPlayerId
-import encore.datastore.collection.PlayerId
-import encore.datastore.collection.PlayerObjects
+import encore.account.FieldPlayerId
+import game.mongo.collection.PlayerId
+import game.mongo.collection.PlayerObjects
 import encore.datastore.runMongoCatching
 import encore.datastore.throwIfNothingMatched
 import game.domain.survivor.model.Survivor

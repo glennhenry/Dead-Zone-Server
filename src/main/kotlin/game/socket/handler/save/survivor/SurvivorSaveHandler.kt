@@ -1,7 +1,7 @@
 package game.socket.handler.save.survivor
 
-import encore.context.ServerContext
-import encore.context.requirePlayerContext
+import game.context.ServerContext
+import game.context.requirePlayerContext
 import encore.fancam.Fancam
 import encore.network.transport.Connection
 import encore.serialization.JSON
@@ -19,7 +19,6 @@ import game.socket.handler.save.survivor.response.SurvivorLoadoutResponse
 import game.socket.handler.save.survivor.response.SurvivorRenameResponse
 import game.socket.protocol.PIOSerializer
 import game.socket.protocol.SaveDataMethod
-import kotlin.text.get
 
 class SurvivorSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.SURVIVOR_SAVES

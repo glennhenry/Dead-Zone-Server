@@ -1,6 +1,6 @@
 package game.domain.survivor
 
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerId
 import game.domain.survivor.model.Survivor
 
 interface SurvivorRepository {

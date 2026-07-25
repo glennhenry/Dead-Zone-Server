@@ -1,6 +1,6 @@
 package game.domain.items
 
-import encore.datastore.collection.Inventory
+import game.mongo.collection.Inventory
 import game.domain.items.model.Item
 
 class BlankInventoryRepository: InventoryRepository {

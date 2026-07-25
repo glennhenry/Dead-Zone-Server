@@ -1,6 +1,6 @@
 package game.socket.handler.save.crate
 
-import encore.context.ServerContext
+import game.context.ServerContext
 import encore.fancam.Fancam
 import encore.network.transport.Connection
 import encore.serialization.JSON

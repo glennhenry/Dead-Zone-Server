@@ -1,6 +1,6 @@
 package game.domain.login
 
-import encore.context.ServerContext
+import game.context.ServerContext
 import encore.serialization.JSON
 
 /**

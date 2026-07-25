@@ -1,6 +1,6 @@
 package game.domain.model.game.data.alliance
 
-import encore.datastore.collection.PlayerId
+import game.mongo.collection.PlayerId
 import kotlinx.serialization.Serializable
 
 @Serializable

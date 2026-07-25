@@ -1,6 +1,6 @@
 package game.socket.handler
 
-import encore.context.ServerContext
+import game.context.ServerContext
 import encore.fancam.Fancam
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
@@ -45,6 +45,7 @@ class JoinHandler(private val serverContext: ServerContext) : FanchantHandler<Pi
         serverContext.contextRegistry.createContext(
             playerId = connection.playerId,
             connection = connection,
+            serverContext
         )
 
         // Second message: game ready message

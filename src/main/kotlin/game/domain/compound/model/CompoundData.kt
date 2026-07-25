@@ -1,6 +1,6 @@
 package game.domain.compound.model
 
-import encore.datastore.collection.PlayerObjects
+import game.mongo.collection.PlayerObjects
 import game.domain.model.game.data.EffectCollection
 import game.domain.model.game.data.TaskCollection
 import game.domain.survivor.model.Morale
