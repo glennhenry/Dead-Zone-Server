@@ -241,7 +241,7 @@ class MissionSaveHandler : SaveSubHandler {
                     concept = MissionReturnActConcept(
                         connection = connection,
                         missionId = missionId,
-                        returnTime = 20.seconds // TO-DO should be based on area level
+                        returnTime = 5.seconds // TO-DO should be based on area level
                     ),
                     scope = ActScope(playerId, connection.connectionScope)
                 )
@@ -249,7 +249,6 @@ class MissionSaveHandler : SaveSubHandler {
                 // remove previously put temp data
                 connection.delete("stats")
                 connection.delete("loots")
-                connection.delete("missionId")
             }
 
             SaveDataMethod.MISSION_ZOMBIES -> {
@@ -290,6 +289,9 @@ class MissionSaveHandler : SaveSubHandler {
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 val missionId = requireNotNull(connection.get("missionId")) { "missionId is null on MISSION_SPEED_UP" }
+                // TODO CAUTION, also call later on finish connection.delete("missionId")
+                // WOULD ALSO NEED TO PERSIST MISSIONID if user llogged off while timer is still going
+                // basically save mission return timer to playerobject, then on player connection, load that into conneciton for usage here
                 connection.sendPIOMessage(NetworkMessage.MISSION_RETURN_COMPLETE, missionId)
             }
 
