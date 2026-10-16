@@ -2,6 +2,7 @@
 
 <img src="progress.png" alt="progress image" width=600/>
 <img src="progress2.png" alt="progress image" width=600/>
+<img src="logs.png" alt="progress image" width=600/>
 
 Server emulator for Dead Zone.
 
