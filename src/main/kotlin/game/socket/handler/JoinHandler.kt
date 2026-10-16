@@ -15,7 +15,6 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.GZIPOutputStream
-import kotlin.reflect.KClass
 
 /**
  * Handle `join` message by:
@@ -25,7 +24,6 @@ import kotlin.reflect.KClass
  */
 class JoinHandler(private val serverContext: ServerContext) : FanchantHandler<PioFanchant> {
     override val fanchantType: String = NetworkMessage.JOIN
-    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
     override suspend fun handle(ctx: HandlerContext<PioFanchant>): Unit = with(ctx) {
         val joinKey = fanchant.getString(NetworkMessage.JOIN)

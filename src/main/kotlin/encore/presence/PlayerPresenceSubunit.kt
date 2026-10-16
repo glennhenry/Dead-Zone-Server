@@ -71,6 +71,28 @@ class PlayerPresenceSubunit : Subunit<ServerScope> {
         onlinePlayers[playerId]?.lastNetworkActivity = TimeCenter.now()
     }
 
+    /**
+     * Get the amount of online players currently.
+     */
+    fun getNumOnlinePlayers(): Int {
+        return onlinePlayers.size
+    }
+
+    /**
+     * Get all currently online players.
+     */
+    fun getAllPlayers(limit: Int = 20): List<PlayerPresence> {
+        return onlinePlayers.values.take(limit)
+    }
+
+    /**
+     * Get the [PlayerPresence] data for [playerId].
+     * @return `null` if player is not online.
+     */
+    fun getPresence(playerId: PlayerId): PlayerPresence? {
+        return onlinePlayers[playerId]
+    }
+
     override suspend fun debut(scope: ServerScope): Result<Unit> = Result.success(Unit)
     override suspend fun disband(scope: ServerScope): Result<Unit> {
         onlinePlayers.clear()

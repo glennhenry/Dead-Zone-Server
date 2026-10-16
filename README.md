@@ -36,7 +36,7 @@ You can also run the server from IntelliJ IDE run plugin on `Application.kt`.
 
 ## Build
 
-To build the server, simply run the `build.bat/sh` script. Output will be in `deploy/`. Run the deployment server using `java -jar encore.jar`.
+To build the server, simply run the `build.bat/sh` script. Output will be in `deploy/`. Run the deployment server using `java -jar Dead-Zone-Server.jar`.
 
 For manual build:
 
@@ -53,12 +53,20 @@ Various server settings can be configured from `venue.xml`. Secret version of th
 Every variables can be overriden from OS environment variables. For example, in PowerShell (Windows):
 
 ```ps1
-$env:ENCORE_DEV_MODE = "false"
+$env:ENCORE_DEVMODE = "false"
 $env:ENCORE_SERVER_PORT = "1234"
-java -jar dzserver.jar
+java -jar "Dead-Zone-Server.jar"
 ```
 
 More information in [Venue.kt](https://github.com/glennhenry/Encore/blob/main/src/main/kotlin/encore/venue/Venue.kt)
+
+## Backstage
+
+The backstage is an interface to various developer tools. The framework provides a logger and command system. Implementation may extend as needed.
+
+Exclusive to `127.0.0.1:8080/backstage` (open image to see it larger):
+
+<img src="backstage.png" alt="backstage preview" width="600px"/>
 
 ## Docs
 
@@ -115,7 +123,7 @@ description: example
 │   │   ├── creation/               # Player creation mechanism
 │   │   ├── datastore/              # Persistence and database components
 │   │   ├── definition/             # Gameplay rules and data abstractions
-│   │   ├── extra/                  # Player extra data service
+│   │   ├── extra/                  # Player and server extra data service
 │   │   ├── fancam/                 # Logging system
 │   │   ├── network/                # Server networking components
 │   │   │   ├── fanchant/           # Game message abstractions

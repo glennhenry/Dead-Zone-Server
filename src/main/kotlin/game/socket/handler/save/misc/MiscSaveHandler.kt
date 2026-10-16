@@ -1,7 +1,7 @@
 package game.socket.handler.save.misc
 
 import game.context.ServerContext
-import game.context.requirePlayerContext
+import encore.context.requirePlayerContext
 import game.socket.handler.save.SaveSubHandler
 import game.socket.protocol.SaveDataMethod
 import encore.fancam.Fancam

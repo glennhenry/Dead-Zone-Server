@@ -1,19 +1,18 @@
 package game.socket.handler
 
-import game.context.ServerContext
-import game.context.requirePlayerContext
+import encore.context.requirePlayerContext
 import encore.fancam.Fancam
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.time.TimeCenter
 import encore.utils.types.onFail
 import encore.utils.types.onOk
+import game.context.ServerContext
 import game.domain.survivor.model.Survivor
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PIOSerializer
 import game.socket.protocol.PioFanchant
 import kotlin.random.Random
-import kotlin.reflect.KClass
 
 /**
  * Handle `rsc` message by:
@@ -22,7 +21,6 @@ import kotlin.reflect.KClass
  */
 class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : FanchantHandler<PioFanchant> {
     override val fanchantType: String = NetworkMessage.REQUEST_SURVIVOR_CHECK
-    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
     override suspend fun handle(ctx: HandlerContext<PioFanchant>): Unit = with(ctx) {
         val id = fanchant.getMap("rsc")?.get("id") as? String

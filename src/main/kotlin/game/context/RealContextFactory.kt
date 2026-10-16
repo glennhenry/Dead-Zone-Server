@@ -10,13 +10,15 @@ import encore.backstage.command.CommandDispatcher
 import encore.context.*
 import encore.creation.PlayerCreationSubunit
 import encore.datastore.MongoDataStore
-import encore.extra.MongoPlayerExtraRepository
-import encore.extra.PlayerExtraSubunit
-import game.mongo.collection.Inventory
+import encore.extra.player.MongoPlayerExtraRepository
+import encore.extra.player.PlayerExtraSubunit
+import encore.extra.server.MongoServerExtraRepository
+import encore.extra.server.ServerExtraSubunit
 import encore.network.lifecycle.PlayerLifecycleHandler
 import encore.network.transport.Connection
 import encore.presence.PlayerPresenceSubunit
 import encore.session.SessionSubunit
+import encore.subunit.SubunitLocator
 import encore.subunit.scope.PlayerScope
 import encore.subunit.scope.ServerScope
 import encore.time.TimeCenter
@@ -32,6 +34,7 @@ import game.domain.metadata.PlayerObjectsMetadataSubunit
 import game.domain.survivor.MongoSurvivorRepository
 import game.domain.survivor.SurvivorSubunit
 import game.mongo.MongoCollections
+import game.mongo.collection.Inventory
 import game.mongo.collection.PlayerId
 import game.mongo.collection.PlayerObjects
 import kotlinx.coroutines.CoroutineScope
@@ -102,7 +105,8 @@ class RealContextFactory(
         val accountRepository = MongoAccountRepository(
             accountCollection = mongoDatabase.getCollection(collections.playerAccount)
         )
-        val extraRepository = MongoPlayerExtraRepository(mongoDatabase.getCollection(collections.playerServerObjects))
+        val playerExtraRepository = MongoPlayerExtraRepository(mongoDatabase.getCollection(collections.playerServerObjects))
+        val serverExtraRepository = MongoServerExtraRepository(mongoDatabase.getCollection(collections.serverObjects))
         val contextRegistry = ContextRegistry(RealContextFactory(collections, mongoDatabase))
         val creationFactory = RealPlayerCreationFactory()
         val stageActDirector = StageActDirector(
@@ -110,7 +114,7 @@ class RealContextFactory(
             actStore = ActIdStore
         )
         val commandDispatcher = CommandDispatcher()
-        val playerLifecycleHandler = PlayerLifecycleHandler(logEachHook = true)
+        val playerLifecycleHandler = PlayerLifecycleHandler()
         val webSocketManager = WebSocketManager()
 
         // setup ServerSubunits
@@ -119,7 +123,8 @@ class RealContextFactory(
         val sessionSubunit = SessionSubunit(appScope, TimeCenter.source)
         val playerCreationSubunit = PlayerCreationSubunit(dataStore, creationFactory)
         val authSubunit = AuthSubunit(accountSubunit, playerCreationSubunit, sessionSubunit)
-        val extra = PlayerExtraSubunit(extraRepository)
+        val extraPlayer = PlayerExtraSubunit(playerExtraRepository)
+        val extraServer = ServerExtraSubunit(serverExtraRepository)
 
         val subunits = ServerSubunits(
             account = accountSubunit,
@@ -127,21 +132,23 @@ class RealContextFactory(
             auth = authSubunit,
             session = sessionSubunit,
             creation = playerCreationSubunit,
-            extra = extra
+            extraPlayer = extraPlayer,
+            extraServer = extraServer,
         )
-
 
         // debut all subunits
         subunits.debut(serverSubunitScope)
 
         val serverContext = ServerContext(
+            appScope = appScope,
             dataStore = dataStore,
             contextRegistry = contextRegistry,
             stageActDirector = stageActDirector,
             commandDispatcher = commandDispatcher,
             playerLifecycleHandler = playerLifecycleHandler,
             webSocketManager = webSocketManager,
-            subunits = subunits
+            subunits = subunits,
+            locator = SubunitLocator()
         )
 
         return serverContext

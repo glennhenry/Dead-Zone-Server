@@ -3,7 +3,7 @@ package game.socket.handler.save.compound.building
 import encore.acts.ActIdStore
 import encore.acts.ActScope
 import game.context.ServerContext
-import game.context.requirePlayerContext
+import encore.context.requirePlayerContext
 import encore.fancam.Fancam
 import encore.network.transport.Connection
 import encore.serialization.JSON

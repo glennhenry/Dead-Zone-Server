@@ -1,10 +1,12 @@
 package encore.acts
 
+import basicDateFormatter
 import encore.acts.choreo.Choreography
 import encore.acts.choreo.ChoreographyContext
 import encore.fancam.Fancam
 import encore.fancam.Tags
 import encore.fancam.events.Level
+import encore.time.TimeCenter
 import encore.time.source.SystemTimeSource
 import encore.time.source.TimeSource
 import encore.utils.Emoji
@@ -17,7 +19,8 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import kotlinx.serialization.Serializable
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -117,7 +120,8 @@ class StageActDirector(
     private val timeSource: TimeSource,
     private val actStore: ActIdStore
 ) {
-    private val activeActs = mutableMapOf<String, Job>()
+    private val activeActsJob = ConcurrentHashMap<String, Job>()
+    private val activeActsInfo = ConcurrentHashMap<String, ActiveActInfo>()
 
     /**
      * Entry point to run a new stage act.
@@ -173,25 +177,31 @@ class StageActDirector(
         callOnStart: Boolean,
         performDirectly: Boolean
     ): String {
-        val startedAt = timeSource.now()
         val id = Ids.uuid()
         val choreo = act.choreography(concept)
+        val metadata = act.metadata(concept)
 
         val job = scope.coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
             var performCount = 0
             var firstPerformAt: Long? = null
             var previousPerformAt: Long? = null
             var finished = false
+            val startedAt = timeSource.now()
+            Fancam.info(Tags.Acts) { "Act '${act.className()}' has just started (actId=${id})." }
 
             try {
+                activeActsInfo.putIfAbsent(
+                    id, ActiveActInfo(id, scope.ownerId, metadata, act.className(), startedAt, -1, -1, -1, 0)
+                )
+
                 if (callOnStart) {
                     act.onStart(concept)
                 }
 
                 if (performDirectly) {
-                    if (act.enableLogging) {
-                        Fancam.debug(Tags.Acts) {
-                            "Act '${act.className()}' will perform directly for '${scope.ownerId}' (actId=${id.shortUuid()})"
+                    if (act.logScheduling) {
+                        Fancam.info(Tags.Acts) {
+                            "Act '${act.className()}' will perform directly for '${scope.ownerId}' (actId=$id)"
                         }
                     }
 
@@ -200,6 +210,9 @@ class StageActDirector(
                     previousPerformAt = now
                     act.perform(concept, 1)
                     performCount = 1
+                    activeActsInfo[id]?.firstPerformAt = now
+                    activeActsInfo[id]?.prevPerformAt = now
+                    activeActsInfo[id]?.performCount = 1
                 }
 
                 while (true) {
@@ -214,22 +227,29 @@ class StageActDirector(
                             previousPerformAt = previousPerformAt,
                         )
                     )
-                    previousPerformAt = now
 
                     if (delay == null) break
 
-                    if (act.enableLogging) {
-                        Fancam.debug(Tags.Acts) {
-                            "Act '${act.className()}' next perform in ${formatFinishTime(delay)} for '${scope.ownerId}' (actId=${id.shortUuid()})"
+                    if (act.logScheduling) {
+                        Fancam.info(Tags.Acts) {
+                            "Act '${act.className()}' next perform in ${formatFinishTime(delay)} for '${scope.ownerId}' (actId=$id)"
                         }
                     }
+                    activeActsInfo[id]?.nextPerformAt = now + delay
 
                     ggeretsae(delay)
 
                     if (delay > 0) delay(delay.milliseconds)
-                    if (firstPerformAt == null) firstPerformAt = timeSource.now()
+                    val performNow = timeSource.now()
+                    if (firstPerformAt == null) {
+                        firstPerformAt = performNow
+                        activeActsInfo[id]?.firstPerformAt = performNow
+                    }
+                    previousPerformAt = performNow
+                    activeActsInfo[id]?.prevPerformAt = performNow
 
                     act.perform(concept, ++performCount)
+                    activeActsInfo[id]?.performCount += 1
                 }
 
                 finished = true
@@ -239,31 +259,31 @@ class StageActDirector(
                     safelySuspend {
                         act.onCancelled(concept)
                     }
-                    Fancam.debug(Tags.Acts) { "Cancelled act '${act.className()}' for '${scope.ownerId}' (actId=${id.shortUuid()})" }
+                    Fancam.info(Tags.Acts) { "Cancelled act '${act.className()}' for '${scope.ownerId}' (actId=${id.shortUuid()})" }
                 }
             } catch (e: Exception) {
-                Fancam.error(e, Tags.Acts) { "Scandal on act '${act.className()}' for '${scope.ownerId}' (actId=${id.shortUuid()})" }
+                Fancam.error(
+                    e,
+                    Tags.Acts
+                ) { "Scandal on act '${act.className()}' for '${scope.ownerId}' (actId=${id.shortUuid()})" }
                 safelySuspend {
                     act.onError(concept, e)
                 }
             } finally {
-                activeActs.remove(id)
+                activeActsInfo.remove(id)
+                activeActsJob.remove(id)
                 actStore.unbind(id)
             }
         }
 
-        activeActs[id] = job
+        activeActsJob[id] = job
         return id
     }
 
-    val formatter = SimpleDateFormat("HH:mm:ss")
-
-    fun formatFinishTime(delay: Long): String {
+    private fun formatFinishTime(delay: Long): String {
+        val formattedDuration = TimeCenter.formatToDurationString(delay)
         val future = (timeSource.now() + delay)
-        val formattedDuration = delay.milliseconds.toComponents { days, hours, minutes, seconds, _ ->
-            String.format("%01dd %01dhr %01dm %01ds", days, hours, minutes, seconds)
-        }
-        val finishDate = formatter.format(future)
+        val finishDate = basicDateFormatter.format(future)
         return "($formattedDuration / at $finishDate)"
     }
 
@@ -277,7 +297,8 @@ class StageActDirector(
      * @return `false` when act is not found, otherwise `true`.
      */
     fun stop(actId: String?): Boolean {
-        (activeActs[actId] ?: return false)
+        activeActsInfo.remove(actId)
+        (activeActsJob[actId] ?: return false)
             .cancel(CancellationException("Act was stopped"))
         return true
     }
@@ -289,14 +310,36 @@ class StageActDirector(
      * coroutine job is in an internal data structure.
      */
     fun isRunning(actId: String): Boolean {
-        return activeActs.containsKey(actId)
+        return activeActsJob.containsKey(actId)
+    }
+
+    /**
+     * Get the act's [ActiveActInfo] associated with its [actId].
+     * @return `null` if `actId` is not found or the act is not running.
+     */
+    fun getAct(actId: String): ActiveActInfo? {
+        return activeActsInfo[actId]
+    }
+
+    /**
+     * Get the total number of running acts.
+     */
+    fun getNumRunningActs(): Int {
+        return activeActsJob.size
+    }
+
+    /**
+     * Get all running acts and return its [ActiveActInfo].
+     */
+    fun getAllRunningActs(limit: Int = 20): List<ActiveActInfo> {
+        return activeActsInfo.values.take(limit)
     }
 
     /**
      * Shutdown by cancelling all running stage acts.
      */
     fun shutdown() {
-        activeActs.forEach { (actId, _) -> stop(actId) }
+        activeActsJob.forEach { (actId, _) -> stop(actId) }
     }
 
     private fun ggeretsae(delay: Long) {
@@ -334,3 +377,28 @@ class StageActDirector(
         return n - 1..n + 1
     }
 }
+
+/**
+ * A running [StageAct] on [StageActDirector].
+ * @property actId
+ * @property ownerId
+ * @property metadata
+ * @property actClassName
+ * @property startedAt
+ * @property firstPerformAt
+ * @property prevPerformAt
+ * @property nextPerformAt
+ * @property performCount
+ */
+@Serializable
+data class ActiveActInfo(
+    val actId: String,
+    val ownerId: String,
+    val metadata: Map<String, String>,
+    val actClassName: String,
+    val startedAt: Long,
+    var firstPerformAt: Long,
+    var prevPerformAt: Long,
+    var nextPerformAt: Long,
+    var performCount: Int
+)

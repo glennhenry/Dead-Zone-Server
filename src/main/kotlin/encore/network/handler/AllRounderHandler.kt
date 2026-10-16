@@ -2,8 +2,8 @@ package encore.network.handler
 
 import encore.fancam.Fancam
 import encore.fancam.Tags
-import encore.network.fanchant.Fanchant
-import kotlin.reflect.KClass
+import encore.network.fanchant.AllRounderFanchant
+import encore.utils.support.className
 
 /**
  * Fallback-based handler implementation of [FanchantHandler].
@@ -14,12 +14,11 @@ import kotlin.reflect.KClass
  * It can also be used as a place to quickly prototype a response without
  * actually implementing a strict fanchant guide or fanchant class.
  */
-class AllRounderHandler : FanchantHandler<Fanchant> {
+class AllRounderHandler : FanchantHandler<AllRounderFanchant> {
     override val fanchantType: String = "N/A"
-    override val expectedFanchantClass: KClass<Fanchant> = Fanchant::class
 
-    override suspend fun handle(ctx: HandlerContext<Fanchant>) = with(ctx) {
-        Fancam.warn(Tags.Socket) { "Unhandled fanchant of type '${fanchant.type}'" }
+    override suspend fun handle(ctx: HandlerContext<AllRounderFanchant>) = with(ctx) {
+        Fancam.warn(Tags.Socket) { "Unhandled fanchant: ${fanchant.className()}(type=${fanchant.type})" }
 
         // directly respond here...
     }

@@ -14,14 +14,17 @@ import encore.context.ContextRegistry
 import encore.context.FakeContextFactory
 import encore.datastore.BlankDataStore
 import encore.datastore.DataStore
-import encore.extra.InMemoryPlayerExtraRepository
-import encore.extra.PlayerExtraRepository
-import encore.extra.PlayerExtraSubunit
-import game.mongo.collection.PlayerId
+import encore.extra.player.InMemoryPlayerExtraRepository
+import encore.extra.player.PlayerExtraRepository
+import encore.extra.player.PlayerExtraSubunit
+import encore.extra.server.InMemoryServerExtraRepository
+import encore.extra.server.ServerExtraRepository
+import encore.extra.server.ServerExtraSubunit
 import encore.fancam.Fancam
 import encore.network.lifecycle.PlayerLifecycleHandler
 import encore.session.SessionSubunit
 import encore.subunit.Subunit
+import encore.subunit.SubunitLocator
 import encore.subunit.scope.ServerScope
 import encore.time.source.SystemTimeSource
 import encore.time.source.TimeSource
@@ -36,6 +39,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * `ServerContext` includes various server-side components needed on the server.
  * It acts as a dependency container which is distributed across the server code.
  *
+ * @property appScope Root coroutine scope system components can use.
  * @property dataStore [DataStore] instance of the server.
  * @property contextRegistry Tracks and manages [PlayerContext].
  * @property commandDispatcher Tracks and executes server commands.
@@ -43,15 +47,18 @@ import kotlin.coroutines.EmptyCoroutineContext
  * @property stageActDirector Provide API to start and stop stage acts.
  * @property webSocketManager Manages client websocket connections.
  * @property subunits Container for server subunit instances.
+ * @property locator Component to store subunits.
  */
 data class ServerContext(
+    val appScope: CoroutineScope,
     val dataStore: DataStore,
     val contextRegistry: ContextRegistry,
     val commandDispatcher: CommandDispatcher,
     val playerLifecycleHandler: PlayerLifecycleHandler,
     val stageActDirector: StageActDirector,
     val webSocketManager: WebSocketManager,
-    val subunits: ServerSubunits
+    val subunits: ServerSubunits,
+    val locator: SubunitLocator
 ) {
     companion object {
         /**
@@ -62,7 +69,8 @@ data class ServerContext(
          * @param dataStore Also used to build [PlayerCreationSubunit].
          * @param playerLifecycleHandler
          * @param accountRepository Used to build [AccountSubunit].
-         * @param extraRepository Used to build [PlayerExtraSubunit].
+         * @param playerExtraRepository Used to build [PlayerExtraSubunit].
+         * @param serverExtraRepository Used to build [ServerExtraSubunit].
          * @param contextFactory Required by [ContextRegistry],
          *                       uses [FakeContextFactory] with empty map by default.
          */
@@ -70,17 +78,20 @@ data class ServerContext(
             parentScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext),
             timeSource: TimeSource = SystemTimeSource(),
             dataStore: DataStore = BlankDataStore(),
-            playerLifecycleHandler: PlayerLifecycleHandler = PlayerLifecycleHandler(true),
+            playerLifecycleHandler: PlayerLifecycleHandler = PlayerLifecycleHandler(),
             accountRepository: AccountRepository = BlankAccountRepository(),
-            extraRepository: PlayerExtraRepository = InMemoryPlayerExtraRepository(),
+            playerExtraRepository: PlayerExtraRepository = InMemoryPlayerExtraRepository(),
+            serverExtraRepository: ServerExtraRepository = InMemoryServerExtraRepository(),
             contextFactory: ContextFactory = FakeContextFactory(emptyMap())
         ): ServerContext {
             val account = AccountSubunit(accountRepository)
             val session = SessionSubunit.createForTest(parentScope)
             val creation = PlayerCreationSubunit.createForTest(dataStore)
-            val extra = PlayerExtraSubunit.createForTest(extraRepository)
+            val extraPlayer = PlayerExtraSubunit.createForTest(playerExtraRepository)
+            val extraServer = ServerExtraSubunit.createForTest(serverExtraRepository)
 
             return ServerContext(
+                appScope = parentScope,
                 dataStore = dataStore,
                 contextRegistry = ContextRegistry(contextFactory),
                 commandDispatcher = CommandDispatcher(),
@@ -91,23 +102,15 @@ data class ServerContext(
                     account = account,
                     auth = AuthSubunit(account, creation, session),
                     creation = creation,
-                    extra = extra,
+                    extraPlayer = extraPlayer,
+                    extraServer = extraServer,
                     presence = PlayerPresenceSubunit(),
                     session = session
-                )
+                ),
+                locator = SubunitLocator(),
             )
         }
     }
-}
-
-/**
- * Shorthand to retrieve [PlayerContext] of [playerId] from [ContextRegistry].
- *
- * @throws IllegalStateException if context is not found.
- */
-fun ServerContext.requirePlayerContext(playerId: PlayerId): PlayerContext {
-    return contextRegistry.getContext(playerId)
-        ?: error("PlayerContext not found for playerId=$playerId")
 }
 
 /**
@@ -129,7 +132,8 @@ fun ServerContext.requirePlayerContext(playerId: PlayerId): PlayerContext {
  * @property account Provides API related to accounts.
  * @property auth Provides authentication functions.
  * @property creation Provides player creation mechanism.
- * @property extra Provides player extra data service.
+ * @property extraPlayer Provides player extra data service.
+ * @property extraServer Provides server extra data service.
  * @property presence Tracks player's presence.
  * @property session Manages session of players.
  */
@@ -137,7 +141,8 @@ data class ServerSubunits(
     val account: AccountSubunit,
     val auth: AuthSubunit,
     val creation: PlayerCreationSubunit,
-    val extra: PlayerExtraSubunit,
+    val extraPlayer: PlayerExtraSubunit,
+    val extraServer: ServerExtraSubunit,
     val presence: PlayerPresenceSubunit,
     val session: SessionSubunit,
 ) {
@@ -146,7 +151,7 @@ data class ServerSubunits(
      * **ADD YOUR NEW SUBUNIT HERE TO BE DEBUTED**
      */
     fun all(): Set<Subunit<ServerScope>> {
-        return setOf(account, auth, creation, extra, presence, session)
+        return setOf(account, auth, creation, extraPlayer, extraServer, presence, session)
     }
 
     /**

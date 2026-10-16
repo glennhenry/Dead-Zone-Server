@@ -23,8 +23,12 @@ class BlankDataStore : DataStore {
     override suspend fun playerObjects(playerId: PlayerId): PlayerObjects? {
         TODO("Not yet implemented")
     }
+
+    override suspend fun <T> updatePlayerObjectsField(playerId: String, path: String, value: T) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun loadObjects(playerId: PlayerId): Triple<PlayerObjects, NeighborHistory, Inventory>? = TODO("NO OPERATION")
     override suspend fun delete(playerId: PlayerId): Result<Unit> = TODO("NO OPERATION")
-    override suspend fun <T> updatePlayerObjectsField(playerId: String, path: String, value: T) = TODO("NO OPERATION")
     override suspend fun shutdown() = TODO("NO OPERATION")
 }

@@ -7,7 +7,7 @@ import encore.time.source.TimeController
 import encore.time.source.TimeSource
 import kotlin.math.max
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Central application component that provides time-related API.
@@ -134,5 +134,47 @@ object TimeCenter {
      */
     fun hasNotReached(targetTime: Long, source: TimeSource = this.source): Boolean {
         return isAfterNow(targetTime, source)
+    }
+
+    /**
+     * Format [time] (in milliseconds) into duration string like:
+     *
+     * `3 day 8 hr 21 min 8 sec`
+     */
+    fun formatToDurationString(time: Long): String {
+        return formatToDurationString(time.milliseconds)
+    }
+
+    /**
+     * Format [time] into duration string like:
+     *
+     * `3 day 8 hr 21 min 8 sec`
+     */
+    fun formatToDurationString(time: Duration): String {
+        return when {
+            time.inWholeDays > 0 -> {
+                time.toComponents { d, h, m, s, _ ->
+                    String.format("%01d day %01d hr %01d min %01d sec", d, h, m, s)
+                }
+            }
+
+            time.inWholeHours > 0 -> {
+                time.toComponents { _, h, m, s, _ ->
+                    String.format("%01d hr %01d min %01d sec", h, m, s)
+                }
+            }
+
+            time.inWholeMinutes > 0 -> {
+                time.toComponents { _, _, m, s, _ ->
+                    String.format("%01d min %01d sec", m, s)
+                }
+            }
+
+            else -> {
+                time.toComponents { _, _, _, s, _ ->
+                    String.format("%01d sec", s)
+                }
+            }
+        }
     }
 }

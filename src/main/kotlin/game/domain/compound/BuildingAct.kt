@@ -10,13 +10,17 @@ import game.socket.sendPIOMessage
 import kotlin.time.Duration
 
 class BuildingAct : StageAct<BuildingActConcept> {
-    override val enableLogging: Boolean = true
+    override val logScheduling: Boolean = true
 
     override fun choreography(concept: BuildingActConcept): Choreography<BuildingActConcept> {
         return BasicChoreography(
             initialDelay = concept.buildDuration,
             performMode = PerformMode.Once
         )
+    }
+
+    override fun metadata(concept: BuildingActConcept): Map<String, String> {
+        return mapOf()
     }
 
     override suspend fun perform(concept: BuildingActConcept, performNumber: Int) {

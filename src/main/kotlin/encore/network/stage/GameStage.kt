@@ -1,15 +1,17 @@
 package encore.network.stage
 
-import game.context.ServerContext
 import encore.fancam.Fancam
 import encore.fancam.INDENT
 import encore.fancam.Tags
+import encore.fancam.formatter.colorizeSegmentFg
+import encore.network.fanchant.AllRounderFanchant
 import encore.network.fanchant.Fanchant
 import encore.network.fanchant.FanchantCoordinator
 import encore.network.fanchant.guide.AllRounderFanchantGuide
 import encore.network.fanchant.guide.DecodeResult
 import encore.network.fanchant.guide.FanchantGuide
 import encore.network.fanchant.guide.FanchantGuideRegistry
+import encore.network.handler.AllRounderHandler
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.network.lifecycle.PlayerLifecycle
@@ -20,10 +22,12 @@ import encore.utils.hexString
 import encore.utils.safeAsciiString
 import encore.utils.startsWithBytes
 import encore.utils.support.className
+import game.context.ServerContext
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
-import io.ktor.utils.io.ClosedByteChannelException
+import io.ktor.utils.io.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlin.system.measureTimeMillis
 
 const val POLICY_FILE_REQUEST = "<policy-file-request/>"
@@ -57,7 +61,7 @@ class GameStage(
         this.serverContext = context
         initBlock(
             GameStageInitContext(
-                serverContext.playerLifecycleHandler,
+                context.playerLifecycleHandler,
                 fanchantCoordinator,
                 fanchantGuideRegistry
             )
@@ -132,18 +136,21 @@ class GameStage(
                     serverContext.playerLifecycleHandler.onReceive(serverContext, connection)
 
                     // start handle
-                    var fanchantType = "[Undetermined]"
+                    var (fanchantType, handlerName) = "[Undetermined]" to "[None]"
                     val elapsed = measureTimeMillis {
-                        fanchantType = handleFanchant(connection, data)
+                        val result = handleFanchant(connection, data)
+                        fanchantType = result.first
+                        handlerName = result.second
                     }
 
                     // end handle
                     Fancam.debug(Tags.Socket) {
                         buildString {
                             appendLine("<===== [SOCKET END]")
-                            appendLine("$INDENT type      : $fanchantType")
-                            appendLine("$INDENT identity  : ${connection.identity}")
-                            appendLine("$INDENT duration  : ${elapsed}ms")
+                            appendLine("$INDENT type     : $fanchantType")
+                            appendLine("$INDENT handler  : $handlerName")
+                            appendLine("$INDENT identity : ${connection.identity}")
+                            appendLine("$INDENT duration : ${elapsed}ms")
                             append("====================================================================================================")
                         }
                     }
@@ -174,21 +181,21 @@ class GameStage(
      * inherently ambiguous. In such cases, the first successful decoding
      * result is selected, and a warning is logged.
      *
-     * @return The specific fanchant type where decode succeed.
+     * @return The specific fanchant type where decode succeeded and its handler class name.
      */
-    private suspend fun handleFanchant(connection: Connection, data: ByteArray): String {
+    private suspend fun handleFanchant(connection: Connection, data: ByteArray): Pair<String, String> {
         // Empty data
         if (data.isEmpty()) {
             Fancam.debug(Tags.Socket) { "[SOCKET] Ignored empty data from connection=$connection" }
-            return "[Empty data]"
+            return "[Empty data]" to "[None]"
         }
 
         Fancam.debug(Tags.Socket) {
             buildString {
                 appendLine("=====> [SOCKET RECEIVE]")
-                appendLine("$INDENT identity  : ${connection.identity}")
-                appendLine("$INDENT bytes     : ${data.size}")
-                appendLine("$INDENT raw       : ${data.safeAsciiString()}")
+                appendLine("$INDENT identity : ${connection.identity}")
+                appendLine("$INDENT bytes    : ${data.size}")
+                appendLine("$INDENT raw      : ${data.safeAsciiString()}")
                 append("$INDENT raw (hex) : ${data.hexString()}")
             }
         }
@@ -207,9 +214,10 @@ class GameStage(
 
                     Fancam.debug(Tags.Socket) {
                         buildString {
-                            appendLine("[SOCKET DECODE] -> success")
-                            appendLine("$INDENT type   : ${fanchant.type}")
-                            append("$INDENT guide  : ${guide.className()}")
+                            appendLine("[SOCKET DECODE] -> ${colorizeSegmentFg(108, "success")}")
+                            appendLine("$INDENT guide    : ${guide.className()}")
+                            appendLine("$INDENT fanchant : ${fanchant.className()}")
+                            append("$INDENT type     : ${fanchant.type}")
                         }
                     }
 
@@ -227,9 +235,10 @@ class GameStage(
                 val chant = allRounderFanchant(data)
                 Fancam.debug(Tags.Socket) {
                     buildString {
-                        appendLine("[SOCKET DECODE] -> fallback")
-                        appendLine("$INDENT type   : ${chant.type}")
-                        append("$INDENT guide  : ${allRounderFanchantGuide.className()}")
+                        appendLine("[SOCKET DECODE] -> ${colorizeSegmentFg(103, "fallback")}")
+                        appendLine("$INDENT guide    : ${allRounderFanchantGuide.className()}")
+                        appendLine("$INDENT fanchant : ${chant.className()}")
+                        append("$INDENT type     : ${chant.type}")
                     }
                 }
 
@@ -255,26 +264,33 @@ class GameStage(
             fanchant = fanchant
         )
 
-        if (!handler.expectedFanchantClass.isInstance(context.fanchant)) {
-            error(
+        try {
+            @Suppress("UNCHECKED_CAST")
+            handler as FanchantHandler<Fanchant>
+            if (handler::class == AllRounderHandler::class) {
+                // edge case: a custom guide exist, but handler for it isn't
+                // this will be routed to AllRounderHandler
+                // to avoid cast fail, "undo" the materialized fanchant into AllRounderFanchant
+                // so that AllRounderHandler can handle gracefully
+                handler.handle(HandlerContext(connection, AllRounderFanchant(data, fanchant.type)))
+            } else {
+                handler.handle(context)
+            }
+        } catch (e: ClassCastException) {
+            Fancam.error(e) {
                 buildString {
-                    appendLine("Fanchant handler type mismatch")
-                    appendLine("Handler         : ${handler.className()}")
-                    appendLine("Handler expects : ${handler.expectedFanchantClass.qualifiedName}")
-                    appendLine("Actual message  : ${context.fanchant::class.qualifiedName}")
-                    appendLine("Fanchant type   : '${context.fanchant.type}'")
+                    appendLine("Fanchant handler generic type mismatch")
+                    appendLine("        Handler         : ${handler.className()}")
+                    appendLine("        Got message     : ${context.fanchant::class.qualifiedName}")
+                    appendLine("        Fanchant type   : '${context.fanchant.type}'")
                     appendLine()
-                    appendLine("> Ensure FanchantHandler<T> generic type matches the actual message class that the routing type is supposed to be.")
-                    appendLine("> e.g., handler with 'login' fanchantType shouldn't declare 'T' as `MoveMessage` when it should be `LoginMessage`.")
+                    appendLine("        > Ensure FanchantHandler<T> generic type matches the actual message class that it receives.")
+                    appendLine("        > e.g., A handler with 'login' fanchantType shouldn't declare 'T' as `MoveMessage` when it actually expects `LoginMessage`.")
                 }
-            )
+            }
         }
 
-        @Suppress("UNCHECKED_CAST")
-        handler as FanchantHandler<Fanchant>
-        handler.handle(context)
-
-        return fanchant.type
+        return fanchant.type to handler.className()
     }
 
     // when no other guide matches, uses AllRounderFanchantGuide

@@ -6,6 +6,7 @@ import encore.acts.choreo.BasicChoreography
 import encore.acts.choreo.Choreography
 import encore.acts.choreo.PerformMode
 import encore.network.transport.Connection
+import game.domain.compound.BuildingActConcept
 import game.socket.protocol.NetworkMessage
 import game.socket.sendPIOMessage
 import kotlin.time.Duration
@@ -15,13 +16,17 @@ import kotlin.time.Duration
  * - MISSION_RETURN_COMPLETE (used in MISSION_END)
  */
 class MissionReturnAct : StageAct<MissionReturnActConcept> {
-    override val enableLogging: Boolean = false
+    override val logScheduling: Boolean = false
 
     override fun choreography(concept: MissionReturnActConcept): Choreography<MissionReturnActConcept> {
         return BasicChoreography(
             initialDelay = concept.returnTime,
             performMode = PerformMode.Once
         )
+    }
+
+    override fun metadata(concept: MissionReturnActConcept): Map<String, String> {
+        return mapOf()
     }
 
     override suspend fun perform(concept: MissionReturnActConcept, performNumber: Int) {

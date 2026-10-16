@@ -1,9 +1,9 @@
 package encore.backstage.command
 
-import encore.backstage.command.types.ArgumentCollection
-import encore.backstage.command.types.ArgumentDescriptor
+import encore.backstage.command.types.Argument
+import encore.backstage.command.types.ArgumentInputs
+import encore.backstage.command.types.ArgumentType
 import encore.backstage.command.types.CommandResult
-import encore.backstage.command.types.CommandVariant
 import game.context.ServerContext
 
 /**
@@ -11,39 +11,35 @@ import game.context.ServerContext
  * Does nothing meaningful beside introducing patterns and testing command invocation.
  */
 class ExampleCommand : Command {
-    override val commandId: String = "test"
-    override val description: String = "This is merely a test command, does nothing. c=2 simulates uncaught exception, c=3 simulates failure"
-    override val variants = listOf(
-        CommandVariant(
-            listOf(
-                ArgumentDescriptor("a", "String", "example of required string type"),
-                ArgumentDescriptor("b", "String", "example of required string type"),
-            ),
-        ),
-        CommandVariant(
-            listOf(
-                ArgumentDescriptor("a", "String", "example of required string type"),
-                ArgumentDescriptor("b", "String", "example of required string type"),
-                ArgumentDescriptor("c", "Int", "example of optional number type (defaults 1)"),
-            ),
-        ),
+    override val id: String = "xxx-example"
+    override val name: String = "Example"
+    override val description: String = "This is merely a test command, does nothing actually."
+    override val arguments: List<Argument> = listOf(
+        Argument("a", "Argument A", "An example of required string argument", ArgumentType.String),
+        Argument("b", "Argument B", "An example of optional string argument", ArgumentType.String, "DefaultString"),
+        Argument("c", "Argument C", "An example of required integer argument", ArgumentType.Int),
+        Argument("d", "Argument D", "An example of optional integer argument", ArgumentType.Int, 2),
+        Argument("e", "Argument E", "An example of required double argument", ArgumentType.Double),
+        Argument("f", "Argument F", "An example of optional double argument", ArgumentType.Double, 3.0),
+        Argument("g", "Argument G", "An example of required boolean argument", ArgumentType.Boolean),
+        Argument("h", "Argument H", "An example of optional boolean argument", ArgumentType.Boolean, true),
+        Argument("i", "Argument I", "e.g., i=2 for uncaught exception, i=3 for execution failure", ArgumentType.Int, 1)
     )
 
-    override fun execute(serverContext: ServerContext, args: ArgumentCollection): CommandResult {
-        val a = args.next() ?: return CommandResult.NotEnoughArgument("a is required")
-        val b = args.next() ?: return CommandResult.NotEnoughArgument("b is required")
+    override suspend fun execute(serverContext: ServerContext, args: ArgumentInputs): CommandResult {
+        val a = args.getString("a")
+        val b = args.getString("b")
+        val c = args.getInt("c")
+        val d = args.getInt("d")
+        val e = args.getDouble("e")
+        val f = args.getDouble("f")
+        val g = args.getBoolean("g")
+        val h = args.getBoolean("h")
+        val i = args.getInt("i")
 
-        val expectedC = args.next()
-        val c = if (expectedC != null) {
-            expectedC.toIntOrNull()
-                ?: return CommandResult.InvalidArgumentType("c is supposed to be an Integer type, got: '$expectedC'")
-        } else {
-            1
-        }
+        if (i == 2) throw Exception("Uncaught exception from i=2")
+        if (i == 3) return CommandResult.ExecutionFailure("Execution failure from i=3")
 
-        if (c == 2) throw Exception("Some uncaught exception")
-        if (c == 3) return CommandResult.ExecutionFailure("Some failed execution due to domain error")
-
-        return CommandResult.Executed("Successfully execute 'test' command with args: a=$a, b=$b, c=$c")
+        return CommandResult.Success("Executed 'test' command with args: a=$a, b=$b, c=$c, d=$d, e=$e, f=$f, g=$g, h=$h, i=$i")
     }
 }

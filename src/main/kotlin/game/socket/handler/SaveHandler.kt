@@ -1,10 +1,10 @@
 package game.socket.handler
 
-import game.context.ServerContext
 import encore.fancam.Fancam
 import encore.network.handler.FanchantHandler
 import encore.network.handler.HandlerContext
 import encore.time.TimeCenter
+import game.context.ServerContext
 import game.socket.handler.save.arena.ArenaSaveHandler
 import game.socket.handler.save.bounty.BountySaveHandler
 import game.socket.handler.save.chat.ChatSaveHandler
@@ -22,7 +22,6 @@ import game.socket.handler.save.raid.RaidSaveHandler
 import game.socket.handler.save.survivor.SurvivorSaveHandler
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PioFanchant
-import kotlin.reflect.KClass
 
 /**
  * Handle `save` message by:
@@ -34,7 +33,6 @@ import kotlin.reflect.KClass
  */
 class SaveHandler(private val serverContext: ServerContext) : FanchantHandler<PioFanchant> {
     override val fanchantType: String = NetworkMessage.SAVE
-    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
     private val saveHandlers = listOf(
         ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(),

@@ -9,7 +9,6 @@ import game.domain.time.TimeUpdateAct
 import game.domain.time.TimeUpdateActConcept
 import game.socket.protocol.NetworkMessage
 import game.socket.protocol.PioFanchant
-import kotlin.reflect.KClass
 
 /**
  * Handle `ic` message by:
@@ -22,7 +21,6 @@ import kotlin.reflect.KClass
 class InitCompleteHandler(private val serverContext: ServerContext) : FanchantHandler<PioFanchant> {
     // IC message is null, so only check for "ic" present
     override val fanchantType: String = NetworkMessage.INIT_COMPLETE
-    override val expectedFanchantClass: KClass<PioFanchant> = PioFanchant::class
 
     override suspend fun handle(ctx: HandlerContext<PioFanchant>): Unit = with(ctx) {
         val playerId = requireNotNull(playerId()) { "PlayerId null during INIT_COMPLETE" }

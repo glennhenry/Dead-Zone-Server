@@ -7,6 +7,7 @@ import encore.acts.choreo.Choreography
 import encore.acts.choreo.PerformMode
 import encore.network.transport.Connection
 import encore.time.TimeCenter
+import game.domain.compound.BuildingActConcept
 import game.socket.protocol.NetworkMessage
 import game.socket.sendPIOMessage
 import kotlin.time.Duration.Companion.milliseconds
@@ -18,13 +19,17 @@ import kotlin.time.Duration.Companion.seconds
  * The game registers callback for such message, though not sure how frequent should we send the message.
  */
 class TimeUpdateAct : StageAct<TimeUpdateActConcept> {
-    override val enableLogging: Boolean = false
+    override val logScheduling: Boolean = false
 
     override fun choreography(concept: TimeUpdateActConcept): Choreography<TimeUpdateActConcept> {
         return BasicChoreography(
             initialDelay = 0.milliseconds,
             performMode = PerformMode.Forever(1.seconds)
         )
+    }
+
+    override fun metadata(concept: TimeUpdateActConcept): Map<String, String> {
+        return mapOf()
     }
 
     override suspend fun perform(concept: TimeUpdateActConcept, performNumber: Int) {

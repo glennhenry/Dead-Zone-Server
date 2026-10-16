@@ -1,10 +1,14 @@
-import bootstrap.*
+import bootstrap.acceptsTerminalInput
+import bootstrap.installEncore
+import bootstrap.logStartupInformation
+import bootstrap.shutdownHook
 import encore.EncoreIdentity
 import encore.EncoreIdentity.celebrate
 import encore.backstage.BackstageRoutes
 import encore.backstage.command.ExampleCommand
-import game.context.ServerContext
+import encore.backstage.command.core.*
 import encore.definition.GameReference
+import encore.fancam.impl.OfficialFancam
 import encore.network.lifecycle.PlayerLifecycle
 import encore.network.stage.GameStage
 import encore.network.stage.GameStageInitContext
@@ -16,10 +20,10 @@ import encore.subunit.scope.ServerScope
 import encore.time.TimeCenter
 import encore.time.source.SystemTimeSource
 import encore.venue.Venue
-import encore.websocket.handler.WsCommandHandler
 import game.GameIdentity
 import game.Globals
 import game.context.RealContextFactory
+import game.context.ServerContext
 import game.definition.ItemsXmlDataLoader
 import game.definition.XmlDataSource
 import game.domain.compound.model.Building
@@ -40,9 +44,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import java.io.File
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
+
+var runningSince: Long = 0
 
 fun main() {
     Venue.prepare()
@@ -59,6 +66,10 @@ fun main() {
 }
 
 val SystemTimezone: ZoneId = ZoneId.systemDefault()
+val basicDateFormatter = SimpleDateFormat("HH:mm:ss")
+val preciseBasicDateFormatter = SimpleDateFormat("HH:mm:ss.SSS")
+val detailedDateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+val preciseDetailedDateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
 
 /**
  * Main configuration and wiring code for the application.
@@ -67,12 +78,16 @@ suspend fun Application.configureApplication() {
     // install system time
     TimeCenter.update(source = SystemTimeSource())
 
+    // configure fancam (logger)
+    val fancam = OfficialFancam(Venue.encore.fancam)
+
     // configure security
     val bannedAddresses = mutableSetOf<String>()
     val security = DefaultSecurity(bannedAddresses, TimeCenter.source)
 
     // setup the framework
     val db = installEncore(
+        fancam = fancam,
         module = SerializersModule {
             polymorphic(BuildingLike::class) {
                 subclass(Building::class, Building.serializer())
@@ -91,6 +106,9 @@ suspend fun Application.configureApplication() {
     val serverContext = RealContextFactory(RuntimeMongoCollections, db)
         .serverContext(appScope, serverSubunitScope)
 
+    // initialize fancam's ws manager
+    fancam.wsManager = serverContext.webSocketManager
+
     // initialize GameReference and register definitions
     gameReference()
 
@@ -103,7 +121,7 @@ suspend fun Application.configureApplication() {
     websocketHandlers(serverContext)
 
     // register commands
-    commandHandlers(serverContext)
+    commandHandlers(fancam, serverContext)
 
     // configure routing
     // ephemeral token storage for /backstage entry
@@ -114,7 +132,6 @@ suspend fun Application.configureApplication() {
         fileRoutes()
         caseInsensitiveStaticResources("/game/data", File("assets"))
         with(BackstageRoutes(serverContext, backstageToken)) { install() }
-        with(DebugLogRoutes(serverContext.webSocketManager)) { install() }
         with(ApiRoutes(serverContext)) { install() }
         with(AuthRoutes(serverContext)) { install() }
     }
@@ -148,6 +165,7 @@ suspend fun Application.configureApplication() {
     // prints encore banner
     println(EncoreIdentity.banner(GameIdentity))
     celebrate(LocalDate.now(SystemTimezone))
+    runningSince = TimeCenter.now()
 
     // install shutdown hook
     shutdownHook(appScope, serverSubunitScope, serverContext.subunits, servers)
@@ -155,13 +173,29 @@ suspend fun Application.configureApplication() {
 
 fun websocketHandlers(serverContext: ServerContext) {
     with(serverContext.webSocketManager) {
-        registerHandler(WsCommandHandler(serverContext))
+        // registerHandler()
     }
 }
 
-fun commandHandlers(serverContext: ServerContext) {
+fun commandHandlers(fancam: OfficialFancam, serverContext: ServerContext) {
     with(serverContext.commandDispatcher) {
         register(ExampleCommand())
+        register(GetLogsCommand(fancam))
+        register(GetRuntimeInfoCommand())
+        register(MemoryStatsCommand())
+        register(ShutdownCommand())
+        register(GetVenueCommand())
+        register(ServerTimeCommand())
+        register(ListSessionCommand())
+        register(VerifySessionCommand())
+        register(ListWebSocketClientCommand())
+        register(ListOnlineCommand())
+        register(GetOnlineCommand())
+        register(ListActsCommand())
+        register(GetActsCommand())
+        register(StopActsCommand())
+        register(GetEasyStorageItemCommand())
+        register(PeekEasyStorageCommand())
     }
 }
 

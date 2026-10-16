@@ -1,22 +1,14 @@
 package encoreTest.backstage
 
-import encore.backstage.command.types.ArgumentCollection
-import encore.backstage.command.types.ArgumentDescriptor
 import encore.backstage.command.Command
 import encore.backstage.command.CommandDispatcher
-import encore.backstage.command.types.CommandRequest
-import encore.backstage.command.types.CommandResult
-import encore.backstage.command.types.CommandVariant
+import encore.backstage.command.ExampleCommand
+import encore.backstage.command.types.*
 import game.context.ServerContext
-import encore.backstage.command.types.variantsAsString
-import encore.fancam.events.Level
+import kotlinx.coroutines.test.runTest
 import testUtils.TestFancam
-import testUtils.randomString
-import kotlin.random.Random
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
+import testUtils.assertDoesNotFail
+import kotlin.test.*
 
 /**
  * Command dispatcher test and example of command implementation [encoreTest.backstage.ExampleGiveCommand].
@@ -32,9 +24,244 @@ class CommandDispatcherTest {
     }
 
     @Test
-    fun `testCommandDispatcher register normal success`() {
-        val dispatcher = CommandDispatcher()
+    fun `argument creation success`() {
+        assertDoesNotFail {
+            Argument("abc", "ABC", "ABCDEFG", ArgumentType.String, "123")
+            Argument("abc", "ABC", "ABCDEFG", ArgumentType.String)
+        }
+    }
 
+    @Test
+    fun `argument expected type mismatch with default should throw`() {
+        assertFailsWith<IllegalArgumentException> {
+            Argument("a", "a", "a", ArgumentType.String, 12)
+        }
+    }
+
+    @Test
+    fun `arguments ensureIds success`() {
+        assertDoesNotFail {
+            listOf(
+                Argument("a", "a", "a", ArgumentType.String),
+                Argument("b", "a", "a", ArgumentType.String),
+            ).ensureIds()
+        }
+    }
+
+    @Test
+    fun `arguments ensureIds with duplicate id should throw`() {
+        assertFailsWith<IllegalArgumentException> {
+            listOf(
+                Argument("dupe", "a", "a", ArgumentType.String),
+                Argument("dupe", "a", "a", ArgumentType.String),
+            ).ensureIds()
+        }
+    }
+
+    @Test
+    fun `argument inputs creation success`() {
+        assertDoesNotFail {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                    Argument("b", "a", "a", ArgumentType.String),
+                ),
+                inputArguments = mapOf(
+                    "a" to "abc",
+                    "b" to "123",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs creation fails on missing argument should throw`() {
+        assertFailsWith<IllegalArgumentException> {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                    Argument("b", "a", "a", ArgumentType.String),
+                ),
+                inputArguments = mapOf(
+                    "a" to "abc",
+                    // "b" to "123",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs creation fails on missing argument but has default success`() {
+        assertDoesNotFail {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                    Argument("b", "a", "a", ArgumentType.String, "abc"),
+                ),
+                inputArguments = mapOf(
+                    "a" to "abc",
+                    // "b" to "123",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs creation fails on invalid type 1 should throw`() {
+        assertFailsWith<IllegalArgumentException> {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                    Argument("b", "a", "a", ArgumentType.Int),
+                ),
+                inputArguments = mapOf(
+                    "a" to "abc",
+                    "b" to "abc",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs creation fails on invalid type strictly should throw`() {
+        assertFailsWith<IllegalArgumentException> {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                    Argument("b", "a", "a", ArgumentType.Int),
+                ),
+                inputArguments = mapOf(
+                    "a" to "abc",
+                    "b" to "12",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs creation success when expected string got number`() {
+        assertDoesNotFail {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                ),
+                inputArguments = mapOf(
+                    "a" to "123"
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs creation success when expected string got double`() {
+        assertDoesNotFail {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                ),
+                inputArguments = mapOf(
+                    "a" to "1.0"
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs creation success when expected string got weird characters`() {
+        assertDoesNotFail {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String),
+                ),
+                inputArguments = mapOf(
+                    "a" to "_#$(@afowenfioa"
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `argument inputs get success`() {
+        val args = ArgumentInputs(
+            commandId = "abc",
+            expectedArguments = listOf(
+                Argument("a", "a", "a", ArgumentType.String),
+                Argument("b", "a", "a", ArgumentType.Int),
+            ),
+            inputArguments = mapOf(
+                "a" to "abc",
+                "b" to 12,
+            )
+        )
+        assertEquals("abc", args.getString("a"))
+        assertEquals(12, args.getInt("b"))
+    }
+
+    @Test
+    fun `argument inputs get fail on invalid key`() {
+        val args = ArgumentInputs(
+            commandId = "abc",
+            expectedArguments = listOf(
+                Argument("a", "a", "a", ArgumentType.String),
+                Argument("b", "a", "a", ArgumentType.String),
+            ),
+            inputArguments = mapOf(
+                "a" to "abc",
+                "b" to "def",
+            )
+        )
+        assertFailsWith<IllegalArgumentException> {
+            args.getString("c")
+        }
+    }
+
+    @Test
+    fun `argument inputs get fail on invalid type`() {
+        val args = ArgumentInputs(
+            commandId = "abc",
+            expectedArguments = listOf(
+                Argument("a", "a", "a", ArgumentType.String),
+                Argument("b", "a", "a", ArgumentType.String),
+            ),
+            inputArguments = mapOf(
+                "a" to "abc",
+                "b" to "def",
+            )
+        )
+        assertFailsWith<IllegalArgumentException> {
+            args.getInt("b")
+        }
+    }
+
+    @Test
+    fun `argument inputs get and creation success to  use input when expected string and has default, but got number`() {
+        assertDoesNotFail {
+            ArgumentInputs(
+                commandId = "abc",
+                expectedArguments = listOf(
+                    Argument("a", "a", "a", ArgumentType.String, ""),
+                ),
+                inputArguments = mapOf(
+                    "a" to "3.0"
+                    // note: using 3.0 without string is still valid
+                    // there is no way to distinguish a JSON-decoded 3.0
+                    // whether it is intended as a string or double
+                )
+            ).getString("a")
+        }
+    }
+
+    @Test
+    fun `command dispatcher register success`() = runTest {
+        val dispatcher = CommandDispatcher()
         dispatcher.register(createCommand("cmd1"))
         dispatcher.register(createCommand("cmd2"))
         dispatcher.register(createCommand("cmd3"))
@@ -42,318 +269,103 @@ class CommandDispatcherTest {
     }
 
     @Test
-    fun `testCommandDispatcher register normal with variant success`() {
+    fun `command dispatcher register duplicate commandId fails`() = runTest {
         val dispatcher = CommandDispatcher()
-
-        dispatcher.register(createCommand("cmd1", generateVariants()))
-        dispatcher.register(createCommand("cmd2", generateVariants()))
-        dispatcher.register(createCommand("cmd3", generateVariants()))
-        dispatcher.getAllRegisteredCommandsId().containsAll(listOf("cmd1", "cmd2", "cmd3"))
-    }
-
-    @Test
-    fun `testCommandDispatcher register duplicate commandId success but warned`() {
-        val dispatcher = CommandDispatcher()
-
-        val cmd2a = generateVariant(2)
-        val cmd2b = generateVariant(3)
-
         dispatcher.register(createCommand("cmd1"))
-        dispatcher.register(createCommand("cmd2", listOf(cmd2a)))
-        dispatcher.register(createCommand("cmd2", listOf(cmd2b)))
-
-        // ensure warned
-        assertTrue {
-            TestFancam.get().assertLogHas(Level.Warn, 1) { it.message().contains("has been registered before") }
-        }
-        // ensure the first registered command get overwritten
-        assertTrue(dispatcher.getAllVariantsOf("cmd2").contains(cmd2b))
-    }
-
-    @Test
-    fun `testCommandDispatcher register duplicate variant failed 1 and throws`() {
-        val dispatcher = CommandDispatcher()
-
-        val first = CommandVariant(
-            listOf(
-                ArgumentDescriptor("abc", "String", "descriptionA"),
-                ArgumentDescriptor("def", "String", "descriptionB"),
-            )
-        )
-
-        val variants = listOf(
-            first,
-            CommandVariant(
-                listOf(
-                    ArgumentDescriptor("abc", "String", "descriptionC"),
-                    ArgumentDescriptor("def", "String", "descriptionD"),
-                )
-            ),
-        )
-
+        dispatcher.register(createCommand("cmd2"))
         assertFailsWith<IllegalArgumentException> {
-            dispatcher.register(createCommand("cmd1", variants))
+            dispatcher.register(createCommand("cmd2"))
+        }
+    }
+
+    private fun createCommand(id: String): Command {
+        return object : Command {
+            override val id: String = id
+            override val name: String = id.uppercase()
+            override val description: String = "TestCommand of $id"
+            override val arguments: List<Argument> = listOf()
+            override suspend fun execute(serverContext: ServerContext, args: ArgumentInputs): CommandResult {
+                return CommandResult.Success("execute() called on command ($id)")
+            }
         }
     }
 
     @Test
-    fun `testCommandDispatcher register duplicate variant failed 2 and throws`() {
+    fun `command dispatcher handleCommand unregistered command returns command not found`() = runTest {
         val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2), generateVariant(2))
-
-        assertFailsWith<IllegalArgumentException> {
-            dispatcher.register(createCommand("cmd1", variants))
-        }
-    }
-
-    @Test
-    fun `testCommandDispatcher register commandId blank 1 throws`() {
-        val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2))
-
-        assertFailsWith<IllegalArgumentException> {
-            dispatcher.register(createCommand("", variants))
-        }
-    }
-
-    @Test
-    fun `testCommandDispatcher register commandId blank 2 throws`() {
-        val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2))
-
-        assertFailsWith<IllegalArgumentException> {
-            dispatcher.register(createCommand("   ", variants))
-        }
-    }
-
-    @Test
-    fun `testCommandDispatcher register commandId has invalid character 1 throws`() {
-        val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2))
-
-        assertFailsWith<IllegalArgumentException> {
-            dispatcher.register(createCommand("@@@", variants))
-        }
-    }
-
-    @Test
-    fun `testCommandDispatcher register commandId has invalid character 2 throws`() {
-        val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2))
-
-        assertFailsWith<IllegalArgumentException> {
-            dispatcher.register(createCommand("  @@@ ", variants))
-        }
-    }
-
-    @Test
-    fun `testCommandDispatcher register commandId has acceptable character does not throws`() {
-        val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2))
-
-        dispatcher.register(createCommand("give-ext", variants))
-    }
-
-    @Test
-    fun `testCommandDispatcher register commandId has whitespace character success`() {
-        val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2))
-
-        dispatcher.register(createCommand("   give-ext", variants))
-        assertTrue(dispatcher.getAllRegisteredCommandsId().contains("give-ext"))
-    }
-
-    @Test
-    fun `testCommandDispatcher register commandId duplicate name but different cases success`() {
-        val dispatcher = CommandDispatcher()
-
-        val variants = listOf(generateVariant(2))
-
-        dispatcher.register(createCommand("give-ext", variants))
-        dispatcher.register(createCommand("giVe-Ext", variants))
-        dispatcher.register(createCommand("GIVE-EXT", variants))
-
-        assertTrue(dispatcher.getAllRegisteredCommandsId().containsAll(listOf("give-ext", "giVe-Ext", "GIVE-EXT")))
-    }
-
-    @Test
-    fun `testCommandDispatcher handleCommand unregistered command returns command not found`() {
-        val dispatcher = CommandDispatcher()
-
-        val request = CommandRequest("cmd", buildArgCollection {})
+        val request = CommandRequest("cmd", mapOf())
         val result = dispatcher.handleCommand(request, context)
         assertTrue(result is CommandResult.CommandNotFound)
     }
 
     @Test
-    fun `testCommandDispatcher handleCommand normally 1 returns executed`() {
+    fun `command dispatcher handleCommand with required arguments returns success`() = runTest {
         val dispatcher = CommandDispatcher()
-        dispatcher.register(ExampleGiveCommand())
-
-        val request = CommandRequest(
-            "give",
-            buildArgCollection {
-                add("playerAbc")
-                add("water")
-            }
-        )
+        dispatcher.register(ExampleCommand())
+        val request =
+            CommandRequest(
+                "xxx-example",
+                mapOf(
+                    "a" to "abc", "b" to "def", "c" to 1,
+                    "d" to 2, "e" to 1.0, "f" to 1.0,
+                    "g" to true, "h" to true
+                )
+            )
         val result = dispatcher.handleCommand(request, context)
-        assertTrue(result is CommandResult.Executed)
+        assertTrue(result is CommandResult.Success)
     }
 
     @Test
-    fun `testCommandDispatcher handleCommand normally 2 returns executed`() {
+    fun `command dispatcher handleCommand with optional arguments returns success`() = runTest {
         val dispatcher = CommandDispatcher()
-        dispatcher.register(ExampleGiveCommand())
+        dispatcher.register(ExampleCommand())
 
-        val request = CommandRequest(
-            "give",
-            buildArgCollection {
-                add("playerAbc")
-                add("water")
-                add("100")
-            }
-        )
+        val request =
+            CommandRequest(
+                "xxx-example",
+                mapOf(
+                    "a" to "abc", "b" to "def", "c" to 1,
+                    "d" to 2, "e" to 1.0, "f" to 1.0,
+                    "g" to true, "h" to true, "i" to 1
+                )
+            )
         val result = dispatcher.handleCommand(request, context)
-        assertTrue(result is CommandResult.Executed)
+        assertTrue(result is CommandResult.Success)
     }
 
     @Test
-    fun `testCommandDispatcher handleCommand insufficient arguments returns not enough argument`() {
+    fun `command dispatcher handleCommand simulates uncaught exception returns error`() = runTest {
         val dispatcher = CommandDispatcher()
-        dispatcher.register(ExampleGiveCommand())
+        dispatcher.register(ExampleCommand())
 
-        val request = CommandRequest(
-            "give",
-            buildArgCollection {
-                add("playerABC")
-            }
-        )
-        val result = dispatcher.handleCommand(request, context)
-        assertTrue(result is CommandResult.NotEnoughArgument)
-    }
-
-    @Test
-    fun `testCommandDispatcher handleCommand argument type mismatch returns invalid argument type`() {
-        val dispatcher = CommandDispatcher()
-        dispatcher.register(ExampleGiveCommand())
-
-        val request = CommandRequest(
-            "give",
-            buildArgCollection {
-                add("playerABC")
-                add("water")
-                add("notNumber")
-            }
-        )
-        val result = dispatcher.handleCommand(request, context)
-        assertTrue(result is CommandResult.InvalidArgumentType)
-    }
-
-    @Test
-    fun `testCommandDispatcher handleCommand simulates uncaught exception returns command error`() {
-        val dispatcher = CommandDispatcher()
-        dispatcher.register(ExampleGiveCommand())
-
-        val request = CommandRequest(
-            "give",
-            buildArgCollection {
-                add("playerABC")
-                add("water")
-                add("2")
-            }
-        )
+        val request =
+            CommandRequest(
+                "xxx-example",
+                mapOf(
+                    "a" to "abc", "b" to "def", "c" to 1,
+                    "d" to 2, "e" to 1.0, "f" to 1.0,
+                    "g" to true, "h" to true, "i" to 2
+                )
+            )
         val result = dispatcher.handleCommand(request, context)
         assertTrue(result is CommandResult.Error)
     }
 
     @Test
-    fun `testCommandDispatcher handleCommand simulates failure returns execution failure`() {
+    fun `command dispatcher handleCommand simulates failure returns execution failure`() = runTest {
         val dispatcher = CommandDispatcher()
-        dispatcher.register(ExampleGiveCommand())
+        dispatcher.register(ExampleCommand())
 
-        val request = CommandRequest(
-            "give",
-            buildArgCollection {
-                add("playerABC")
-                add("water")
-                add("3")
-            }
-        )
+        val request =
+            CommandRequest(
+                "xxx-example",
+                mapOf(
+                    "a" to "abc", "b" to "def", "c" to 1,
+                    "d" to 2, "e" to 1.0, "f" to 1.0,
+                    "g" to true, "h" to true, "i" to 3
+                )
+            )
         val result = dispatcher.handleCommand(request, context)
         assertTrue(result is CommandResult.ExecutionFailure)
-    }
-
-    @Test
-    fun `testCommandDispatcher handleCommand too many arguments still success returns executed`() {
-        val dispatcher = CommandDispatcher()
-        dispatcher.register(ExampleGiveCommand())
-
-        val request = CommandRequest(
-            "give",
-            buildArgCollection {
-                add("playerABC")
-                add("water")
-                add("4")
-                add("4")
-                add("a")
-                add("b")
-            }
-        )
-        val result = dispatcher.handleCommand(request, context)
-        assertTrue(result is CommandResult.Executed)
-    }
-
-    private val charPool = ('a'..'z') + ('A'..'Z')
-    private val typePool = setOf("String", "Int", "Boolean", "Double")
-
-    private fun generateDescriptor(): ArgumentDescriptor {
-        val id = randomString(Random.nextInt(4, 9), charPool)
-        val desc = randomString(Random.nextInt(10, 30), charPool)
-        val type = typePool.random()
-
-        return ArgumentDescriptor(id, type, desc)
-    }
-
-    private fun generateDescriptors(): List<ArgumentDescriptor> {
-        return List(Random.nextInt(1, 4)) {
-            generateDescriptor()
-        }
-    }
-
-    private fun generateVariant(length: Int): CommandVariant {
-        return CommandVariant(List(length) {
-            generateDescriptor()
-        })
-    }
-
-    private fun generateVariants(): List<CommandVariant> {
-        return List(Random.nextInt(1, 4)) { idx ->
-            generateVariant(length = idx)
-        }
-    }
-
-    private fun createCommand(id: String, variants: List<CommandVariant> = emptyList()): Command {
-        return object : Command {
-            override val commandId: String = id
-            override val description: String = "TestCommand of $id with variants: ${variants.variantsAsString()}"
-            override val variants: List<CommandVariant> = variants
-
-            override fun execute(serverContext: ServerContext, args: ArgumentCollection): CommandResult {
-                return CommandResult.Executed("execute() called on command ($id)")
-            }
-        }
-    }
-
-    private fun buildArgCollection(block: MutableList<String>.() -> Unit): ArgumentCollection {
-        val list = buildList(block)
-        return ArgumentCollection(list)
     }
 }
